@@ -7,7 +7,7 @@ import { site } from '../data/site';
 <Base title="KVKK aydınlatma metni" description="Kurt İnşaat kişisel verilerin korunması aydınlatma metni: hangi bilgileri, neden ve ne kadar süre işlediğimiz ve haklarınız.">
   <Floor id="cati" code="Ç" name="KVKK" kot="+3.00" slab={false} class="phead" label="kv-h">
     <div class="wrap g12">
-      <div style="grid-column:1 / span 8">
+      <div class="kv-col">
         <p class="phead__kot" aria-hidden="true"><KotMark /><span>+3.00</span></p>
         <h1 id="kv-h" class="display h-l">Kişisel verilerin korunması aydınlatma metni</h1>
         {site.placeholder && <p class="phead__p" style="color:var(--signal-ink);font-weight:600">Taslak metin. Yayından önce bir hukukçuya kontrol ettirilmelidir.</p>}
@@ -16,7 +16,7 @@ import { site } from '../data/site';
   </Floor>
   <Floor id="metin" code="Z" name="Metin" kot="±0.00">
     <div class="wrap g12 sec">
-      <div class="prose" style="grid-column:1 / span 8">
+      <div class="prose kv-col">
         <h2 id="metin-h" class="h-m">Veri sorumlusu</h2>
         <p>{site.legalName}, {site.address.join(', ')}. E-posta: {site.email}.</p>
         <h2 class="h-m" style="margin-top:2rem">Bu site hangi bilgileri topluyor?</h2>

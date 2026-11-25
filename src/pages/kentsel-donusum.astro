@@ -61,7 +61,7 @@ const faqLd = {
             const len = s.to - s.from;
             return (
               <li class="gantt__row">
-                <p class="gantt__t">{s.title}<small>{s.text}</small></p>
+                <p class="gantt__t">{s.title}<span class="gantt__range">{s.from === 0 ? 'İlk ay' : `${s.from + 1}. ay`}{len > 1 ? ` ile ${s.to}. ay arası, ${len} ay` : ''}</span><small>{s.text}</small></p>
                 <div class="gantt__track" role="img" aria-label={`${s.from}. aydan ${s.to}. aya, ${len} ay`}>
                   <span class={len > 6 ? 'gantt__bar gantt__bar--long' : 'gantt__bar'} data-bar data-flip={s.to > 22 ? '' : undefined} style={`left:${(s.from / tr.months) * 100}%;width:${(len / tr.months) * 100}%`}><span class="gantt__months">{len} ay</span></span>
                 </div>

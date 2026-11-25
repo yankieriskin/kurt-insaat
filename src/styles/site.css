@@ -1181,7 +1181,8 @@ html:has(.fbar) { scroll-padding-top: calc(var(--hdr) + 5rem); }
   .gal a:nth-child(n) { flex: 0 0 86%; aspect-ratio: 4 / 5; scroll-snap-align: start; margin: 0; }
   .split__b { margin-top: 1.6rem; }
   .foot__grid { gap: 2rem; }
-  .foot__col--pages { display: none; }
+  .foot__col--pages, .foot__col--proj { display: none; }
+  .lift__name { display: block; }
   .foot__grid > .foot__col:not(.foot__col--pages) { grid-column: auto; }
   .foot__legal { padding-bottom: 1rem; }
   .bigline__v { font-size: 1.15rem; }
@@ -1202,8 +1203,11 @@ html:has(.fbar) { scroll-padding-top: calc(var(--hdr) + 5rem); }
   .ucard dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dzcard { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: var(--gutter); padding: clamp(1.6rem, 3vw, 2.6rem); }
   .dzcard > * { grid-column: 1; }
-  .dzcard__fig { display: block; grid-column: 2; grid-row: 1 / span 4; align-self: center; }
-  .dzcard__k { grid-column: 1 / -1; }
+  .dzcard__k { grid-column: 1 / -1; grid-row: 1; }
+  .dzcard > h2 { grid-row: 2; }
+  .dzcard__facts { grid-row: 3; }
+  .dzcard .btns { grid-row: 4; }
+  .dzcard__fig { display: block; grid-column: 2; grid-row: 2 / span 3; align-self: end; }
   .dzcard .btns { justify-self: start; }
   .gantt__range { display: none; }
 }
@@ -1243,7 +1247,7 @@ html:has(.fbar) { scroll-padding-top: calc(var(--hdr) + 5rem); }
   .rail--proj > * { --rail-w: calc((100% - 36px) / 4); }
   .rail--full > * { --rail-w: 100%; }
 
-  .hero { min-height: 100svh; padding-top: calc(var(--hdr) + clamp(1.5rem, 4vw, 3.5rem)); padding-bottom: clamp(3rem, 6vw, 5.5rem); }
+  .hero { min-height: 100svh; padding-top: calc(var(--hdr) + clamp(1.5rem, 4vw, 3.5rem)); padding-bottom: calc(var(--dock) + 1rem); }
   .hero__top { grid-column: 1 / span 5; padding-top: clamp(0.5rem, 3vw, 3rem); }
   .hero__fig { grid-column: 6 / span 7; grid-row: 1; margin-top: 0; }
   .hero__p { font-size: 1.08rem; }
@@ -1278,3 +1282,22 @@ html:has(.fbar) { scroll-padding-top: calc(var(--hdr) + 5rem); }
   .has-actbar { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
 }
 @media (prefers-reduced-motion: reduce) { .tabbar { transition: none; } }
+.nextp > span:first-child { display: grid; gap: 0.2rem; }
+.pr-chips { margin-top: 1.2rem; }
+@media (min-width: 1024px) { .pr-chips { flex-wrap: wrap; overflow: visible; margin-inline: 0; padding-inline: 0; } }
+.sec__aside { grid-column: 1 / -1; margin-top: 0.8rem; }
+@media (min-width: 1024px) {
+  .sec__head--wide { grid-column: 1 / span 7; }
+  .sec__aside { grid-column: 8 / span 5; align-self: end; margin-top: 0; }
+}
+.kv-col { grid-column: 1 / -1; }
+@media (min-width: 1024px) { .kv-col { grid-column: 1 / span 8; } }
+
+/* telefonda üst çubuk her zaman dolu (uygulama çubuğu gibi) */
+@media (max-width: 1023px) {
+  .hdr { background: var(--paper); }
+  .is-scrolled .hdr { box-shadow: 0 1px 0 var(--line); }
+}
+.ld-hero { padding-bottom: 2.6rem; }
+@media (hover: hover) { .chip--solid:hover { background: var(--signal); border-color: var(--signal); color: var(--ink); } .chip--solid:hover small { color: var(--ink); } }
+.chip--solid:focus-visible { background: var(--signal); border-color: var(--signal); color: var(--ink); }

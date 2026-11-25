@@ -2,9 +2,9 @@
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Floor from '../components/Floor.astro';
-import Btn from '../components/Btn.astro';
 
 import KotMark from '../components/KotMark.astro';
+import Icon from '../components/Icon.astro';
 import { site, wa, images } from '../data/site';
 ---
 <Base title="İletişim" description={`Kurt İnşaat ofisi: ${site.address.join(', ')}. Telefon ${site.phone.label}, WhatsApp ${site.whatsapp.label}. Hafta içi 09.00 ile 18.30 arası açığız.`}>
@@ -22,14 +22,16 @@ import { site, wa, images } from '../data/site';
     <div class="wrap g12 sec split">
       <div class="split__a">
         <h2 id="ofis-h" class="h-m">Ofis</h2>
-        <dl class="facts" style="margin-top:1rem">
+        <ul class="acts">
+          <li><a class="act act--wa" href={wa('Merhaba, Kurt İnşaat sitesinden yazıyorum.')} target="_blank" rel="noopener"><Icon name="chat" /><span class="act__t">WhatsApp’tan yazın<small>{site.whatsapp.label}</small></span><Icon name="arrow" class="act__go" /><span class="sr-only"> (yeni sekmede açılır)</span></a></li>
+          <li><a class="act" href={site.phone.href}><Icon name="phone" /><span class="act__t">Arayın<small>{site.phone.label}</small></span><Icon name="arrow" class="act__go" /></a></li>
+          <li><a class="act" href={`mailto:${site.email}`}><Icon name="mail" /><span class="act__t">E-posta<small>{site.email}</small></span><Icon name="arrow" class="act__go" /></a></li>
+          <li><a class="act" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.mapQuery)}`} target="_blank" rel="noopener"><Icon name="pin" /><span class="act__t">Yol tarifi<small>{site.address.join(', ')}</small></span><Icon name="arrow" class="act__go" /><span class="sr-only"> (yeni sekmede açılır)</span></a></li>
+        </ul>
+        <dl class="facts" style="margin-top:1.5rem">
           <dt>Adres</dt><dd>{site.address.join(', ')}</dd>
           {site.hours.map(([d, h]) => <><dt>{d}</dt><dd>{h}</dd></>)}
-          <dt>Telefon</dt><dd><a class="ulink" href={site.phone.href}>{site.phone.label}</a></dd>
-          <dt>WhatsApp</dt><dd><a class="ulink" href={wa('Merhaba, Kurt İnşaat sitesinden yazıyorum.')} target="_blank" rel="noopener">{site.whatsapp.label}<span class="sr-only"> (yeni sekmede açılır)</span></a></dd>
-          <dt>E-posta</dt><dd><a class="ulink" href={`mailto:${site.email}`}>{site.email}</a></dd>
         </dl>
-        <div class="btns" style="margin-top:1.5rem"><Btn href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.mapQuery)}`} variant="line" external>Yol tarifi</Btn></div>
       </div>
       <div class="split__b">
         <h2 class="h-m" style="margin-bottom:1rem">Sizi arayalım</h2>

@@ -107,7 +107,7 @@ const cardT = cardInit ? unitType(p, cardInit.type) : null;
     <Floor id="daireler" {...fl('daireler')}>
       <div class="wrap sec">
         <div class="g12" style="margin-bottom:clamp(1.5rem,3vw,2.5rem)">
-          <div class="sec__head" style="grid-column:1 / span 7">
+          <div class="sec__head sec__head--wide">
             <h2 id="daireler-h" class="display h-l" data-split="lines">{sale.length ? `${sale.length} daire satışta.` : 'Bütün daireler satıldı.'}</h2>
             <p class="muted">
               <span class="hint-hover">Kesitte bir dairenin üstüne gelin ya da tıklayın.</span><span class="hint-touch">Kesitte bir daireye dokunun.</span>
@@ -171,11 +171,12 @@ const cardT = cardInit ? unitType(p, cardInit.type) : null;
               const t = unitType(p, u.type);
               return (
                 <li data-unit-row={u.no} class={u === cardInit ? 'is-selected' : undefined}>
-                  <button type="button" class="urow" aria-label={`Daire ${u.no}, ${floorName(u.floor)}, ${u.type}, ${statusLabel[u.status]}: kesitte göster`}>
+                  <button type="button" class="urow">
                     <span class="urow__no">Daire {u.no}</span>
-                    <span class="urow__m">{floorName(u.floor)} · {u.type} · net {m2(t.net)} · {u.facade}</span>
+                    <span class="urow__m">{u.type} · {u.floor === 0 ? 'Zemin' : `Kat ${u.floor}`} · net {m2(t.net)} · {u.facade}</span>
                     <span class="urow__p">{u.price && (u.status === 'satista' || u.status === 'opsiyon') ? price(u.price) : ''}</span>
                     <span class={`st st--${u.status}`}>{statusLabel[u.status]}</span>
+                    <span class="sr-only">, kesitte göster</span>
                   </button>
                 </li>
               );
@@ -209,12 +210,12 @@ const cardT = cardInit ? unitType(p, cardInit.type) : null;
     <Floor id="tipler" {...fl('tipler')}>
       <div class="wrap sec">
         <div class="g12">
-          <div class="sec__head" style="grid-column:1 / span 7">
+          <div class="sec__head sec__head--wide">
             <h2 id="tipler-h" class="display h-l" data-split="lines">Daire tipleri, oda oda.</h2>
             <p class="muted">Şemalarda odalar metrekareleriyle orantılı çizildi; bunlar mimari plan değildir. Ölçülü kat planını PDF olarak WhatsApp’tan isteyebilirsiniz.</p>
           </div>
         </div>
-        <div class="types">
+        <div class="types" role="group" aria-label="Daire tipleri">
           {p.types.map((t) => (
             <article class="type" id={`tip-${t.key.replace('+', '-')}`}>
               <div class="type__h"><h3>{t.key}</h3><span class="small muted">{p.units.filter((u) => u.type === t.key).length} daire</span></div>
@@ -237,10 +238,10 @@ const cardT = cardInit ? unitType(p, cardInit.type) : null;
   {p.gallery.length > 1 && (
     <Floor id="galeri" {...fl('galeri')}>
       <div class="wrap sec">
-        <div class="g12"><h2 id="galeri-h" class="display h-l sec__head" data-split="lines">Görseller.</h2><p class="muted" style="grid-column:8 / span 5;align-self:end">Bina ve iç mekân görselleri temsilidir. Şantiye fotoğrafları şantiyeden.</p></div>
+        <div class="g12"><h2 id="galeri-h" class="display h-l sec__head" data-split="lines">Görseller.</h2><p class="muted sec__aside">Bina ve iç mekân görselleri temsilidir. Şantiye fotoğrafları şantiyeden.</p></div>
         <div class="gal" data-gallery>
           {p.gallery.map((g, i) => (
-            <a href={full[i].src} data-full={full[i].src} data-caption={`${g.group}: ${g.alt}`} aria-label={`Büyüt: ${g.alt}`} data-reveal="doors">
+            <a href={full[i].src} data-full={full[i].src} data-caption={`${g.group}: ${g.alt}`} aria-label={`${g.group}: ${g.alt} (büyüt)`} data-reveal="doors">
               <Image quality={68} src={g.img} alt={g.alt} widths={[560, 900, 1300]} sizes="(max-width: 767px) 100vw, 55vw" loading="lazy" />
               <span class="gal__group" aria-hidden="true">{g.group}</span>
             </a>
@@ -312,7 +313,7 @@ const cardT = cardInit ? unitType(p, cardInit.type) : null;
     <a class="ab__ic" href={site.phone.href} aria-label={`Arayın: ${site.phone.label}`}><Icon name="phone" /></a>
     {hasUnits && cardInit ? (
       <a class="ab__main" href={wa(`Merhaba, ${p.name} daire ${cardInit.no} (${cardInit.type}, ${floorName(cardInit.floor).toLocaleLowerCase('tr')}) hakkında bilgi almak istiyorum.`)} target="_blank" rel="noopener" data-ab-wa>
-        <span class="ab__t"><b>WhatsApp’tan sorun</b><small data-ab-s>Daire {cardInit.no}, {floorName(cardInit.floor).toLocaleLowerCase('tr')}{cardInit.price && cardInit.status !== 'satildi' ? `, ${price(cardInit.price)}` : ''}</small></span><Icon name="arrow" /><span class="sr-only"> (yeni sekmede açılır)</span>
+        <span class="ab__t"><b>WhatsApp’tan sorun</b><small data-ab-s>Daire {cardInit.no}{cardInit.price && cardInit.status !== 'satildi' ? `, ${price(cardInit.price)}` : `, ${floorName(cardInit.floor).toLocaleLowerCase('tr')}`}</small></span><Icon name="arrow" /><span class="sr-only"> (yeni sekmede açılır)</span>
       </a>
     ) : !hasUnits ? (
       <a class="ab__main" href="#on-kayit"><span class="ab__t"><b>Ön kayıt listesine yazılın</b><small>Ruhsat çıkınca fiyatlar ilk size</small></span><Icon name="arrow" /></a>
