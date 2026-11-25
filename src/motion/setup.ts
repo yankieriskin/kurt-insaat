@@ -19,7 +19,8 @@ const labels: [RegExp, string][] = [
   [/^\/iletisim/, 'İLETİŞİM'],
   [/^\/kvkk/, 'KVKK'],
 ];
-const labelFor = (path: string) => {
+const labelFor = (rawPath: string) => {
+  const path = rawPath.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '') || '/';
   const ilan = path.match(/^\/ilanlar\/([a-z]+-\d+)/i);
   if (ilan) return ilan[1].toUpperCase();
   return labels.find(([re]) => re.test(path))?.[1] ?? '--';

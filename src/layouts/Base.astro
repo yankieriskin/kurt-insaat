@@ -19,7 +19,7 @@ const { title, description = site.description, image = '/og.png', jsonLd } = Ast
 const hasAct = Astro.slots.has('actbar');
 const fullTitle = title ? `${title} | ${site.name}` : `${site.name} | İstanbul Anadolu yakasında konut`;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url).href;
-const ogImage = new URL(image, Astro.site ?? site.url).href;
+const ogImage = new URL(image.startsWith('/') ? import.meta.env.BASE_URL.replace(/\/$/, '') + image : image, Astro.site ?? site.url).href;
 const org = {
   '@context': 'https://schema.org',
   '@type': ['HomeAndConstructionBusiness', 'RealEstateAgent'],
