@@ -29,3 +29,7 @@ npm run preview    # yayın dosyalarını yerelde aç
 `dist/` klasörü herhangi bir statik barındırmaya (GitHub Pages, Netlify, Cloudflare Pages, Vercel) konabilir.
 Önce `astro.config.mjs` içindeki `site` ve `src/data/site.ts` içindeki `url` değerini gerçek alan adıyla değiştirin,
 `public/robots.txt` içindeki adresi de güncelleyin.
+
+## Telefon öncelikli düzen
+
+Site önce telefon için kuruldu. Alttaki sekme çubuğu ve "Bize yaz" çekmecesi `src/components/Header.astro` içinde. İlan ve proje sayfalarında alttaki geri / ara / WhatsApp çubuğu, sayfanın `actbar` bölümünden gelir. Bilgisayarda aynı alt menü ekranın altında yüzen bir panel olarak görünür.

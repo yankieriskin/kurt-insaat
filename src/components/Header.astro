@@ -51,10 +51,10 @@ const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURICompone
     <h2 id="by-h" class="sheet__h">Bize ulaşın</h2>
     <button type="button" class="sheet__x" data-sheet-close aria-label="Kapat"><Icon name="close" /></button>
   </div>
-  <p class="sheet__sub">Mesai saatinde bir saat içinde, akşam yazarsanız ertesi sabah dönüyoruz.</p>
+  <p class="sheet__sub">Size hangisi kolaysa. Yazdığınız her mesaja aynı gün dönüyoruz.</p>
   <ul class="acts">
-    <li><a class="act act--wa" href={hello} target="_blank" rel="noopener"><Icon name="chat" /><span class="act__t">WhatsApp’tan yazın<small>{site.whatsapp.label}</small></span><Icon name="arrow" class="act__go" /><span class="sr-only"> (yeni sekmede açılır)</span></a></li>
-    <li><a class="act" href={site.phone.href}><Icon name="phone" /><span class="act__t">Arayın<small>{site.phone.label}</small></span><Icon name="arrow" class="act__go" /></a></li>
+    <li><a class="act act--wa" href={hello} target="_blank" rel="noopener"><Icon name="chat" /><span class="act__t">WhatsApp’tan mesaj<small>{site.whatsapp.label}</small></span><Icon name="arrow" class="act__go" /><span class="sr-only"> (yeni sekmede açılır)</span></a></li>
+    <li><a class="act" href={site.phone.href}><Icon name="phone" /><span class="act__t">Telefonla arayın<small>{site.phone.label}</small></span><Icon name="arrow" class="act__go" /></a></li>
     <li><a class="act" href={maps} target="_blank" rel="noopener"><Icon name="pin" /><span class="act__t">Ofise gelin<small>{site.address.join(', ')}</small></span><Icon name="arrow" class="act__go" /><span class="sr-only"> (yeni sekmede açılır)</span></a></li>
   </ul>
   <dl class="sheet__hours">

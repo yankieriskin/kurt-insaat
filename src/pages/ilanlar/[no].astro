@@ -3,7 +3,6 @@ import { Image, getImage } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import Floor from '../../components/Floor.astro';
 import Btn from '../../components/Btn.astro';
-import KotMark from '../../components/KotMark.astro';
 import ListingCard from '../../components/ListingCard.astro';
 import AreaPlan from '../../components/AreaPlan.astro';
 import Icon from '../../components/Icon.astro';
@@ -71,7 +70,7 @@ const jsonLd = {
           {l.images.length > 1 && <p class="ld-gal__count" aria-hidden="true"><span data-rail-count="r-foto">1</span> / {l.images.length}</p>}
           {l.images.length > 1 && <div class="rnav"><button type="button" data-rail-prev="r-foto" aria-label="Önceki fotoğraf" aria-controls="r-foto"><Icon name="prev" /></button><button type="button" data-rail-next="r-foto" aria-label="Sonraki fotoğraf" aria-controls="r-foto"><Icon name="next" /></button></div>}
         </div>
-        <p class="xs muted ld-gal__note">Görseller temsilidir. Büyütmek için fotoğrafa dokunun.</p>
+        <p class="xs muted ld-gal__note">Görseller temsilidir. <span class="hint-touch">Kaydırarak gezin, büyütmek için dokunun.</span><span class="hint-hover">Büyütmek için fotoğrafa tıklayın.</span></p>
       </div>
       <aside class="ld-side" aria-label="Fiyat ve iletişim">
         <ol class="crumbs" aria-label="Konum"><li><a href="/">Ana sayfa</a></li><li><a href="/ilanlar/">İlanlar</a></li><li aria-current="page">{l.no}</li></ol>

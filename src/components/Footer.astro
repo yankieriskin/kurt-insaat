@@ -15,14 +15,14 @@ import { nav, site, wa, projects } from '../data/site';
         <a href={`mailto:${site.email}`} class="bigline"><span class="bigline__k">E-posta</span><span class="bigline__v">{site.email}</span></a>
       </div>
     </div>
-    <nav class="foot__col" aria-label="Sayfalar">
+    <nav class="foot__col foot__col--pages" aria-label="Sayfalar">
       <h2 class="foot__h">Sayfalar</h2>
       <ul>
         <li><a href="/" class="ulink">Ana sayfa</a></li>
         {nav.map((n) => <li><a href={n.href} class="ulink">{n.label}</a></li>)}
       </ul>
     </nav>
-    <nav class="foot__col" aria-label="Projeler">
+    <nav class="foot__col foot__col--proj" aria-label="Projeler">
       <h2 class="foot__h">Projeler</h2>
       <ul>{projects.map((p) => <li><a href={`/projeler/${p.slug}/`} class="ulink">{p.name}</a></li>)}</ul>
     </nav>
@@ -37,7 +37,7 @@ import { nav, site, wa, projects } from '../data/site';
     <p>© 2026 {site.name}. Taşınmaz ticareti yetki belgesi no: {site.licence}.</p>
     <p>Görseller temsilidir. Fiyat ve durumlar {site.updated} tarihinde güncellendi.</p>
     {site.placeholder && <p class="foot__ph">Bu sitedeki projeler, ilanlar ve iletişim bilgileri örnek içeriktir.</p>}
-    <p><a href="/kvkk/" class="ulink">KVKK aydınlatma metni</a>. Bu site çerez kullanmaz.</p>
+    <p><a href="/iletisim/" class="ulink">İletişim</a> · <a href="/kvkk/" class="ulink">KVKK aydınlatma metni</a>. Bu site çerez kullanmaz.</p>
   </div>
   <div class="earthband" aria-hidden="true"></div>
 </footer>

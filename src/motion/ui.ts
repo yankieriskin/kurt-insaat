@@ -1,13 +1,14 @@
-// Sayfa parçaları: mobil menü, proje listesi önizlemesi, ilan süzgeci, daire seçimi, galeri, WhatsApp formları.
+// Sayfa parçaları: alttan açılan çekmeceler, kayan listeler, ilan süzgeci, daire seçimi, proje sekmeleri, galeri, WhatsApp formları.
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { onPage, onScroll, isTouch, prefersReducedMotion, stopScroll, startScroll, ease } from '../engine';
+import { onPage, onScroll, prefersReducedMotion, stopScroll, startScroll, ease } from '../engine';
 import type { UnitInfo } from './kesit';
 
 export function ui() {
   headerState();
-  menu();
-  indexPreview();
+  sheets();
+  rails();
+  ptabs();
   filters();
   unitPicker();
   gallery();
@@ -28,100 +29,138 @@ function bars() {
   });
 }
 
-/* Başlık: sayfa kayınca alt çizgi ve zemin rengi alır */
+/* Başlık: sayfa kayınca alt çizgi alır. Bilgisayardaki yüzen alt panel aşağı kayarken çekilir, yukarı kayınca döner. */
 function headerState() {
-  onScroll(({ y }) => document.documentElement.classList.toggle('is-scrolled', y > 8));
-  onPage(() => { document.documentElement.classList.toggle('is-scrolled', scrollY > 8); });
+  const html = document.documentElement;
+  onScroll(({ y, velocity }) => {
+    html.classList.toggle('is-scrolled', y > 8);
+    if (y < 240 || velocity < -0.8) html.classList.remove('dock-away');
+    else if (velocity > 0.8) html.classList.add('dock-away');
+  });
+  onPage(() => { html.classList.toggle('is-scrolled', scrollY > 8); html.classList.remove('dock-away'); });
 }
 
-/* Mobil menü: odak içeride kalır, Escape kapatır, odak düğmeye döner */
-function menu() {
+/* Alttan açılan çekmece (<dialog>): kaydırarak, dışına dokunarak, Escape ya da Kapat ile kapanır. */
+function sheets() {
   onPage(() => {
-    const btn = document.querySelector<HTMLButtonElement>('[data-menu-btn]');
-    const panel = document.getElementById('menu');
-    if (!btn || !panel) return;
-    const links = () => [...panel.querySelectorAll<HTMLElement>('a, button')];
-    const set = (open: boolean) => {
-      btn.setAttribute('aria-expanded', String(open));
-      btn.querySelector('[data-menu-label]')!.textContent = open ? 'Kapat' : 'Menü';
-      document.documentElement.classList.toggle('menu-open', open);
-      if (open) {
-        panel.hidden = false;
+    const offs = [...document.querySelectorAll<HTMLDialogElement>('dialog[data-sheet]')].map((dlg) => {
+      let closing = false;
+      const openers = [...document.querySelectorAll<HTMLElement>(`[data-sheet-open="${dlg.id}"]`)];
+      const reduced = prefersReducedMotion();
+      const open = (e: Event) => {
+        e.preventDefault();
+        if (dlg.open) return;
+        dlg.showModal();
         stopScroll();
-        if (!prefersReducedMotion()) {
-          gsap.fromTo(panel, { clipPath: 'inset(0% 50% 0% 50%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.7, ease: ease.inOut });
-          gsap.fromTo(panel.querySelectorAll('.menu__big a'), { yPercent: 110 }, { yPercent: 0, duration: 0.9, ease: ease.out, stagger: 0.05, delay: 0.25 });
-        }
-        links()[0]?.focus();
-      } else {
-        startScroll();
-        const done = () => { panel.hidden = true; };
-        if (prefersReducedMotion()) done();
-        else gsap.to(panel, { clipPath: 'inset(0% 50% 0% 50%)', duration: 0.5, ease: ease.inOut, onComplete: done });
-      }
-    };
-    const toggle = () => set(btn.getAttribute('aria-expanded') !== 'true');
-    const key = (e: KeyboardEvent) => {
-      if (btn.getAttribute('aria-expanded') !== 'true') return;
-      if (e.key === 'Escape') { set(false); btn.focus(); }
-      if (e.key === 'Tab') {
-        const l = [btn, ...links()];
-        const i = l.indexOf(document.activeElement as HTMLElement);
-        if (e.shiftKey && i <= 0) { e.preventDefault(); l[l.length - 1].focus(); }
-        else if (!e.shiftKey && i === l.length - 1) { e.preventDefault(); l[0].focus(); }
-      }
-    };
-    const navClose = (e: Event) => { if ((e.target as Element).closest('a')) { document.documentElement.classList.remove('menu-open'); startScroll(); } };
-    btn.addEventListener('click', toggle);
-    document.addEventListener('keydown', key);
-    panel.addEventListener('click', navClose);
-    return () => {
-      btn.removeEventListener('click', toggle);
-      document.removeEventListener('keydown', key);
-      panel.removeEventListener('click', navClose);
-      document.documentElement.classList.remove('menu-open');
-    };
+        if (!reduced) gsap.fromTo(dlg, { yPercent: 100, y: 0 }, { yPercent: 0, duration: 0.55, ease: ease.out, overwrite: true });
+      };
+      const finish = () => { closing = false; gsap.set(dlg, { clearProps: 'transform' }); if (dlg.open) dlg.close(); };
+      const close = () => {
+        if (!dlg.open || closing) return;
+        closing = true;
+        if (reduced) finish();
+        else gsap.to(dlg, { yPercent: 100, duration: 0.35, ease: ease.inOut, overwrite: true, onComplete: finish });
+      };
+      const onCancel = (e: Event) => { e.preventDefault(); close(); };
+      const onClick = (e: MouseEvent) => {
+        if ((e.target as Element).closest('[data-sheet-close]')) { close(); return; }
+        if (e.target !== dlg) return;
+        const r = dlg.getBoundingClientRect();
+        if (e.clientY < r.top || e.clientX < r.left || e.clientX > r.right) close();
+      };
+      const onClose = () => { closing = false; startScroll(); };
+      // tutamaktan aşağı sürükleyince kapanır
+      const grip = dlg.querySelector<HTMLElement>('[data-sheet-grip]');
+      let y0 = 0, dy = 0, drag = false;
+      const down = (e: PointerEvent) => { drag = true; y0 = e.clientY; dy = 0; grip!.setPointerCapture(e.pointerId); };
+      const move = (e: PointerEvent) => { if (!drag) return; dy = Math.max(0, e.clientY - y0); gsap.set(dlg, { y: dy }); };
+      const up = () => {
+        if (!drag) return;
+        drag = false;
+        if (dy > 80) { closing = true; gsap.to(dlg, { y: dlg.offsetHeight, duration: 0.3, ease: ease.out, onComplete: finish }); }
+        else gsap.to(dlg, { y: 0, duration: 0.35, ease: ease.out });
+      };
+      openers.forEach((o) => o.addEventListener('click', open));
+      dlg.addEventListener('cancel', onCancel);
+      dlg.addEventListener('click', onClick);
+      dlg.addEventListener('close', onClose);
+      grip?.addEventListener('pointerdown', down);
+      grip?.addEventListener('pointermove', move);
+      grip?.addEventListener('pointerup', up);
+      grip?.addEventListener('pointercancel', up);
+      return () => {
+        openers.forEach((o) => o.removeEventListener('click', open));
+        dlg.removeEventListener('cancel', onCancel);
+        dlg.removeEventListener('click', onClick);
+        dlg.removeEventListener('close', onClose);
+        grip?.removeEventListener('pointerdown', down);
+        grip?.removeEventListener('pointermove', move);
+        grip?.removeEventListener('pointerup', up);
+        grip?.removeEventListener('pointercancel', up);
+        if (dlg.open) dlg.close();
+      };
+    });
+    return () => offs.forEach((f) => f());
   });
 }
 
-/* Proje listesi: masaüstünde imleci izleyen görsel */
-function indexPreview() {
+/* Yatay kayan listeler: kaçıncı kartta olunduğu sayılır, bilgisayarda oklarla kayar. Kaydırma dinleyicisi yok, görünürlük gözlemcisi var. */
+function rails() {
   onPage(() => {
-    const list = document.querySelector<HTMLElement>('[data-index]');
-    const box = document.querySelector<HTMLElement>('[data-preview]');
-    if (!list || !box || isTouch() || prefersReducedMotion()) return;
-    const img = box.querySelector('img')!;
-    const x = gsap.quickTo(box, 'x', { duration: 0.6, ease: 'power3.out' });
-    const y = gsap.quickTo(box, 'y', { duration: 0.6, ease: 'power3.out' });
-    let px = 0, py = 0, shown = false;
-    const move = (e: PointerEvent) => { px = e.clientX; py = e.clientY; x(px); y(py); };
-    const show = (e: Event) => {
-      const a = e.currentTarget as HTMLElement;
-      if (img.getAttribute('src') !== a.dataset.img) img.src = a.dataset.img!;
-      if (!shown) gsap.fromTo(box, { clipPath: 'inset(0% 50% 0% 50%)', autoAlpha: 1 }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.6, ease: ease.out, overwrite: true });
-      shown = true;
-    };
-    const hide = () => {
-      if (!shown) return;
-      shown = false;
-      gsap.to(box, { clipPath: 'inset(0% 50% 0% 50%)', duration: 0.35, ease: ease.soft, overwrite: true, onComplete: () => { if (!shown) gsap.set(box, { autoAlpha: 0 }); } });
-    };
-    const hideNow = () => { shown = false; gsap.killTweensOf(box); gsap.set(box, { autoAlpha: 0, clipPath: 'inset(0% 50% 0% 50%)' }); };
-    document.addEventListener('click', hideNow, true);
-    const rows = [...list.querySelectorAll<HTMLAnchorElement>('a[data-img]')];
-    rows.forEach((a) => a.addEventListener('pointerenter', show));
-    list.addEventListener('pointerleave', hide);
-    addEventListener('pointermove', move, { passive: true });
-    const check = () => { if (shown && !list.contains(document.elementFromPoint(px, py))) hide(); };
-    const off = onScroll(check);
-    // Liste nasıl kayarsa kaysın (tekerlek, klavye, betik) görünümden çıkınca önizleme kapanır.
-    ScrollTrigger.create({ trigger: list, start: 'top bottom', end: 'bottom top', onUpdate: check, onToggle: (st) => { if (!st.isActive) hide(); } });
-    rows.slice(0, 4).forEach((a) => { const i = new Image(); i.src = a.dataset.img!; });
-    return () => { removeEventListener('pointermove', move); document.removeEventListener('click', hideNow, true); off(); hideNow(); };
+    // Telefonda yana kayan ama içinde bağlantı olmayan kutular klavyeyle de kaydırılabilsin
+    document.querySelectorAll<HTMLElement>('.antet, .types').forEach((el) => {
+      if (el.scrollWidth > el.clientWidth + 1) el.tabIndex = 0;
+      else el.removeAttribute('tabindex');
+    });
+    const offs = [...document.querySelectorAll<HTMLElement>('[data-rail]')].map((rail) => {
+      const items = [...rail.children] as HTMLElement[];
+      if (!items.length) return () => {};
+      const counters = [...document.querySelectorAll<HTMLElement>(`[data-rail-count="${rail.id}"]`)];
+      const prev = document.querySelector<HTMLButtonElement>(`[data-rail-prev="${rail.id}"]`);
+      const next = document.querySelector<HTMLButtonElement>(`[data-rail-next="${rail.id}"]`);
+      const ratio = new Map<HTMLElement, number>();
+      const update = () => {
+        const seen = items.filter((el) => (ratio.get(el) ?? 0) >= 0.6);
+        if (seen.length) counters.forEach((c) => (c.textContent = String(items.indexOf(seen[0]) + 1)));
+        if (prev) prev.disabled = (ratio.get(items[0]) ?? 0) > 0.97;
+        if (next) next.disabled = (ratio.get(items[items.length - 1]) ?? 0) > 0.97;
+      };
+      const io = new IntersectionObserver((es) => { es.forEach((e) => ratio.set(e.target as HTMLElement, e.intersectionRatio)); update(); }, { root: rail, threshold: [0, 0.6, 0.98] });
+      items.forEach((el) => io.observe(el));
+      const step = (d: number) => () => {
+        const w = items[0].getBoundingClientRect().width + (parseFloat(getComputedStyle(rail).columnGap) || 0);
+        const per = Math.max(1, Math.floor((rail.clientWidth + 1) / w));
+        rail.scrollBy({ left: d * w * per, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+      };
+      const p = step(-1), n = step(1);
+      prev?.addEventListener('click', p);
+      next?.addEventListener('click', n);
+      return () => { io.disconnect(); prev?.removeEventListener('click', p); next?.removeEventListener('click', n); };
+    });
+    return () => offs.forEach((f) => f());
   });
 }
 
-/* İlan süzgeci: adres çubuğuyla eşleşir, paylaşılabilir */
+/* Proje sayfası: yapışkan bölüm sekmeleri, okunan bölümü işaretler */
+function ptabs() {
+  onPage(() => {
+    const nav = document.querySelector<HTMLElement>('[data-ptabs]');
+    if (!nav) return;
+    const list = nav.querySelector<HTMLElement>('ul')!;
+    const links = [...nav.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')];
+    const set = (a: HTMLAnchorElement | null) => {
+      links.forEach((l) => (l === a ? l.setAttribute('aria-current', 'true') : l.removeAttribute('aria-current')));
+      if (a) list.scrollTo({ left: a.offsetLeft - 12, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    };
+    links.forEach((a) => {
+      const t = document.querySelector<HTMLElement>(a.hash);
+      if (!t) return;
+      ScrollTrigger.create({ trigger: t, start: 'top 35%', end: 'bottom 35%', onToggle: (st) => { if (st.isActive) set(a); else if (a.hasAttribute('aria-current') && st.direction < 0 && a === links[0]) set(null); } });
+    });
+  });
+}
+
+/* İlan süzgeci: çipler + çekmece; adres çubuğuyla eşleşir, paylaşılabilir */
 function filters() {
   onPage(() => {
     const form = document.querySelector<HTMLFormElement>('[data-filters]');
@@ -129,23 +168,29 @@ function filters() {
     if (!form || !grid) return;
     const count = document.querySelector<HTMLElement>('[data-count]')!;
     const empty = document.querySelector<HTMLElement>('[data-empty]')!;
+    const fcount = form.querySelector<HTMLElement>('[data-fcount]');
+    const showBtn = form.querySelector<HTMLElement>('[data-count-btn]');
+    const inlineReset = document.querySelector<HTMLElement>('[data-reset-inline]');
     const cards = [...grid.querySelectorAll<HTMLElement>('[data-l]')];
+    const controls = () => [...form.elements] as HTMLInputElement[];
     const q = new URLSearchParams(location.search);
-    for (const [k, v] of q) {
-      const el = form.elements.namedItem(k) as HTMLInputElement | RadioNodeList | null;
-      if (el) (el as HTMLInputElement).value = v;
+    for (const el of controls()) {
+      if (!el.name || !q.has(el.name)) continue;
+      const vals = q.getAll(el.name);
+      if (el.type === 'checkbox' || el.type === 'radio') el.checked = vals.includes(el.value);
+      else el.value = vals[0];
     }
     const run = () => {
       const f = new FormData(form);
       const tur = String(f.get('tur') || '');
-      const oda = String(f.get('oda') || '');
+      const odas = f.getAll('oda').map(String);
       const ilce = String(f.get('ilce') || '');
       const max = Number(f.get('max') || 0);
       const sira = String(f.get('sira') || 'yeni');
       let n = 0;
       for (const c of cards) {
         const d = c.dataset;
-        const ok = (!tur || d.tur === tur) && (!oda || d.oda === oda) && (!ilce || d.ilce === ilce) && (!max || Number(d.fiyat) <= max);
+        const ok = (!tur || d.tur === tur) && (!odas.length || odas.includes(d.oda!)) && (!ilce || d.ilce === ilce) && (!max || Number(d.fiyat) <= max);
         c.hidden = !ok;
         if (ok) n++;
       }
@@ -157,18 +202,23 @@ function filters() {
       });
       sorted.forEach((c) => grid.appendChild(c));
       count.textContent = `${n} ilan`;
+      if (showBtn) showBtn.textContent = n ? `${n} ilanı göster` : 'Uyan ilan yok';
       empty.hidden = n > 0;
+      const inSheet = (ilce ? 1 : 0) + (max ? 1 : 0) + (sira !== 'yeni' ? 1 : 0);
+      if (fcount) { fcount.textContent = String(inSheet); fcount.hidden = !inSheet; }
+      if (inlineReset) inlineReset.hidden = !(tur || odas.length || inSheet);
       const p = new URLSearchParams();
-      for (const [k, v] of f) if (v && !(k === 'sira' && v === 'yeni')) p.set(k, String(v));
+      for (const [k, v] of f) if (v && !(k === 'sira' && v === 'yeni')) p.append(k, String(v));
       history.replaceState(history.state, '', `${location.pathname}${p.size ? `?${p}` : ''}`);
     };
     const reset = (e: Event) => { e.preventDefault(); form.reset(); run(); };
+    const resets = [...document.querySelectorAll<HTMLElement>('[data-reset]')];
+    const submit = (e: Event) => { e.preventDefault(); run(); };
     form.addEventListener('change', run);
-    form.addEventListener('submit', (e) => { e.preventDefault(); run(); });
-    form.querySelector('[data-reset]')?.addEventListener('click', reset);
-    empty.querySelector('[data-reset]')?.addEventListener('click', reset);
+    form.addEventListener('submit', submit);
+    resets.forEach((r) => r.addEventListener('click', reset));
     run();
-    return () => form.removeEventListener('change', run);
+    return () => { form.removeEventListener('change', run); form.removeEventListener('submit', submit); resets.forEach((r) => r.removeEventListener('click', reset)); };
   });
 }
 
@@ -197,6 +247,12 @@ function unitPicker() {
       wa.href = `${waBase}${encodeURIComponent(`Merhaba, ${project} daire ${i.no} (${i.type}, ${i.floorName.toLocaleLowerCase('tr')}) hakkında bilgi almak istiyorum.`)}`;
       const plan = card.querySelector<HTMLAnchorElement>('[data-c="plan"]')!;
       plan.href = `#tip-${i.type.replace('+', '-')}`;
+      const ab = document.querySelector<HTMLAnchorElement>('[data-ab-wa]');
+      if (ab) {
+        ab.href = wa.href;
+        const sub = ab.querySelector<HTMLElement>('[data-ab-s]');
+        if (sub) sub.textContent = `Daire ${i.no}, ${i.price || i.floorName.toLocaleLowerCase('tr')}`;
+      }
       rows.forEach((r) => r.classList.toggle('is-selected', Number(r.dataset.unitRow) === i.no));
       card.classList.remove('is-flash');
       void card.offsetWidth;
@@ -211,7 +267,7 @@ function unitPicker() {
         fig.dispatchEvent(new CustomEvent('kesit:choose', { detail: no }));
         const a = fig.querySelector<SVGAElement>(`#kesit-d${no}`);
         if (a) set(JSON.parse(a.dataset.unit!));
-        fig.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+        (innerWidth < 768 ? card : fig).scrollIntoView({ block: innerWidth < 768 ? 'center' : 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
       };
       btn.addEventListener('click', c);
       return () => btn.removeEventListener('click', c);
