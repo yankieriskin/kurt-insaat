@@ -1,0 +1,12 @@
+---
+interface Props { size?: 'sm' | 'lg' }
+const { size = 'sm' } = Astro.props;
+---
+<span class:list={['logo', `logo--${size}`]}>
+  <svg class="logo__mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M12 19 5 7h14z" class="logo__tri" />
+    <path d="M12 19 5 7h7z" class="logo__half" />
+    <path d="M1.5 19h21" class="logo__line" />
+  </svg>
+  <span class="logo__word"><span class="logo__a">Kurt</span> <span class="logo__b">İnşaat</span></span>
+</span>

@@ -1,0 +1,18 @@
+---
+// Küçük kesit: dairenin binadaki yeri (kat ve taraf). İlan kartlarında rozet olarak durur.
+interface Props { floors: number; floor: number; side: 0 | 1; label: string }
+const { floors, floor, side, label } = Astro.props;
+const n = floors + 1; // zemin dahil
+const cw = 22, ch = 9, gx = 6;
+const W = cw * 2 + gx + 8, H = n * ch + 14;
+---
+<span class="mk" aria-hidden="true">
+  <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H}>
+    <rect x="4" y="4" width={W - 8} height={n * ch} class="mk__b" />
+    {Array.from({ length: n }, (_, f) => [0, 1].map((s) => (
+      <rect x={4 + s * (cw + gx)} y={4 + (n - 1 - f) * ch} width={cw} height={ch} class={f === floor && s === side ? 'mk__c mk__c--on' : 'mk__c'} />
+    )))}
+    <line x1="0" x2={W} y1={4 + n * ch} y2={4 + n * ch} class="mk__g" />
+  </svg>
+  <span class="mk__t">{label}</span>
+</span>

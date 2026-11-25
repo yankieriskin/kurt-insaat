@@ -1,0 +1,64 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { site, wa } from '../data/site';
+const path = Astro.url.pathname;
+const cur = (href: string) => (href === '/' ? path === '/' : path.startsWith(href)) ? 'page' : undefined;
+const tabs = [
+  { href: '/', label: 'Ana sayfa', icon: 'home' },
+  { href: '/ilanlar/', label: 'İlanlar', icon: 'key' },
+  { href: '/projeler/', label: 'Projeler', icon: 'crane' },
+  { href: '/kentsel-donusum/', label: 'Dönüşüm', icon: 'swap' },
+] as const;
+const hello = wa('Merhaba, Kurt İnşaat sitesinden yazıyorum.');
+const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.mapQuery)}`;
+---
+<header class="hdr">
+  <a href="/" class="hdr__logo" aria-label="Kurt İnşaat, ana sayfa"><Logo /></a>
+
+  <div class="lift" data-lift>
+    <button type="button" class="lift__btn" data-lift-btn aria-expanded="false" aria-controls="lift-panel" aria-label="Katlar menüsü">
+      <span class="lift__name" data-lift-name aria-hidden="true"></span>
+      <span class="lift__screen" aria-hidden="true">
+        <span class="lift__arrow" data-lift-arrow></span>
+        <span class="lift__code" data-lift-code></span>
+      </span>
+      <svg class="lift__chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5 6 8l4-3.5" /></svg>
+    </button>
+    <div class="lift__panel" id="lift-panel" data-lift-panel hidden>
+      <p class="lift__title">Bu sayfanın katları</p>
+      <ol></ol>
+    </div>
+  </div>
+
+  <a class="hdr__wa" href={hello} target="_blank" rel="noopener">
+    <span class="hdr__wa-k">WhatsApp</span><span class="hdr__wa-n">{site.whatsapp.label}</span><span class="sr-only"> (yeni sekmede açılır)</span>
+  </a>
+</header>
+
+<nav class="tabbar" aria-label="Ana menü" data-tabbar>
+  <ul>
+    {tabs.map((t) => (
+      <li><a class="tab" href={t.href} aria-current={cur(t.href)}><Icon name={t.icon} /><span>{t.label}</span></a></li>
+    ))}
+    <li><a class="tab tab--wa" href="/iletisim/" data-sheet-open="bize-yaz" aria-haspopup="dialog" aria-current={cur('/iletisim/')}><Icon name="chat" /><span>Bize yaz</span></a></li>
+  </ul>
+</nav>
+
+<dialog class="sheet" id="bize-yaz" aria-labelledby="by-h" data-sheet>
+  <div class="sheet__grip" data-sheet-grip aria-hidden="true"><span></span></div>
+  <div class="sheet__head">
+    <h2 id="by-h" class="sheet__h">Bize ulaşın</h2>
+    <button type="button" class="sheet__x" data-sheet-close aria-label="Kapat"><Icon name="close" /></button>
+  </div>
+  <p class="sheet__sub">Mesai saatinde bir saat içinde, akşam yazarsanız ertesi sabah dönüyoruz.</p>
+  <ul class="acts">
+    <li><a class="act act--wa" href={hello} target="_blank" rel="noopener"><Icon name="chat" /><span class="act__t">WhatsApp’tan yazın<small>{site.whatsapp.label}</small></span><Icon name="arrow" class="act__go" /><span class="sr-only"> (yeni sekmede açılır)</span></a></li>
+    <li><a class="act" href={site.phone.href}><Icon name="phone" /><span class="act__t">Arayın<small>{site.phone.label}</small></span><Icon name="arrow" class="act__go" /></a></li>
+    <li><a class="act" href={maps} target="_blank" rel="noopener"><Icon name="pin" /><span class="act__t">Ofise gelin<small>{site.address.join(', ')}</small></span><Icon name="arrow" class="act__go" /><span class="sr-only"> (yeni sekmede açılır)</span></a></li>
+  </ul>
+  <dl class="sheet__hours">
+    {site.hours.map(([d, h]) => <div><dt>{d}</dt><dd>{h}</dd></div>)}
+  </dl>
+  <p class="sheet__more"><a class="ulink" href="/iletisim/">Sizi arayalım: iletişim sayfası</a></p>
+</dialog>

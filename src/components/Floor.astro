@@ -1,0 +1,24 @@
+---
+// Bir kat = bir bölüm. Üstünde döşeme (taralı beton bant) ve kot etiketi durur.
+// Asansör göstergesi data-floor / data-floor-name / data-kot değerlerini okur.
+import KotMark from './KotMark.astro';
+interface Props {
+  id: string;
+  code: string;
+  name: string;
+  kot: string;
+  tone?: 'sky' | 'soil' | 'paper';
+  slab?: boolean;
+  class?: string;
+  label?: string;
+}
+const { id, code, name, kot, tone, slab = true, class: cls, label } = Astro.props;
+---
+<section id={id} class:list={['floor', tone && `tone-${tone}`, cls]} data-floor={code} data-floor-name={name} data-kot={kot} aria-labelledby={label ?? `${id}-h`}>
+  {slab && (
+    <div class="slab" aria-hidden="true">
+      <span class="slab__tag"><KotMark /><span class="slab__kot">{kot}</span></span>
+    </div>
+  )}
+  <slot />
+</section>

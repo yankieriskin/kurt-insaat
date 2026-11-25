@@ -1,0 +1,43 @@
+---
+import KotMark from './KotMark.astro';
+import { nav, site, wa, projects } from '../data/site';
+---
+<footer class="foot tone-soil" id="temel" data-floor="-1" data-floor-name="Temel" data-kot="−3.00">
+  <div class="slab slab--light" aria-hidden="true">
+    <span class="slab__tag"><KotMark /><span class="slab__kot">−3.00</span></span>
+  </div>
+  <div class="foot__grid wrap">
+    <div class="foot__call">
+      <p class="foot__say">Bir daire için yazın, aynı gün dönelim.</p>
+      <div class="foot__big">
+        <a href={wa('Merhaba, Kurt İnşaat sitesinden yazıyorum.')} target="_blank" rel="noopener" class="bigline"><span class="bigline__k">WhatsApp</span><span class="bigline__v">{site.whatsapp.label}</span><span class="sr-only"> (yeni sekmede açılır)</span></a>
+        <a href={site.phone.href} class="bigline"><span class="bigline__k">Telefon</span><span class="bigline__v">{site.phone.label}</span></a>
+        <a href={`mailto:${site.email}`} class="bigline"><span class="bigline__k">E-posta</span><span class="bigline__v">{site.email}</span></a>
+      </div>
+    </div>
+    <nav class="foot__col" aria-label="Sayfalar">
+      <h2 class="foot__h">Sayfalar</h2>
+      <ul>
+        <li><a href="/" class="ulink">Ana sayfa</a></li>
+        {nav.map((n) => <li><a href={n.href} class="ulink">{n.label}</a></li>)}
+      </ul>
+    </nav>
+    <nav class="foot__col" aria-label="Projeler">
+      <h2 class="foot__h">Projeler</h2>
+      <ul>{projects.map((p) => <li><a href={`/projeler/${p.slug}/`} class="ulink">{p.name}</a></li>)}</ul>
+    </nav>
+    <div class="foot__col">
+      <h2 class="foot__h">Ofis</h2>
+      <address>{site.address.map((l) => <span>{l}</span>)}</address>
+      <ul class="foot__hours">{site.hours.map(([d, h]) => <li><span>{d}</span> <span>{h}</span></li>)}</ul>
+    </div>
+  </div>
+  <div class="foot__word" aria-hidden="true"><span>Kurt</span><span>İnşaat</span></div>
+  <div class="foot__legal wrap">
+    <p>© 2026 {site.name}. Taşınmaz ticareti yetki belgesi no: {site.licence}.</p>
+    <p>Görseller temsilidir. Fiyat ve durumlar {site.updated} tarihinde güncellendi.</p>
+    {site.placeholder && <p class="foot__ph">Bu sitedeki projeler, ilanlar ve iletişim bilgileri örnek içeriktir.</p>}
+    <p><a href="/kvkk/" class="ulink">KVKK aydınlatma metni</a>. Bu site çerez kullanmaz.</p>
+  </div>
+  <div class="earthband" aria-hidden="true"></div>
+</footer>

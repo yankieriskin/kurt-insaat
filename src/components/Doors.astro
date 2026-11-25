@@ -1,0 +1,21 @@
+---
+// Asansör kapıları. kind="arrive": ilk açılışta (oturum başına bir kez) kapılar kapalı başlar, gösterge
+// katları sayar, kapılar açılır. Tamamen CSS ile çalışır, JavaScript'i beklemez (1,75 sn).
+// kind="curtain": sayfa geçişi; kapıları GSAP kapatır/açar, gösterge gidilen sayfanın adını yazar.
+import { ledSVG } from '../motion/led';
+interface Props { kind: 'arrive' | 'curtain' }
+const { kind } = Astro.props;
+const floors = ['B', 'Z', '1', '2', '3', '4', '5', 'Ç'];
+---
+<div class="doors">
+  <div class="door door--l"><span class="door__edge"></span></div>
+  <div class="door door--r"><span class="door__edge"></span></div>
+  <div class="doors__screen">
+    <span class="doors__arrow" data-led-arrow set:html={ledSVG('▲')} />
+    {kind === 'arrive' ? (
+      <span class="doors__strip"><span class="doors__strip-in" set:html={floors.map((f) => ledSVG(f, { min: 2 })).join('')} /></span>
+    ) : (
+      <span class="doors__word" data-led-word />
+    )}
+  </div>
+</div>

@@ -1,0 +1,44 @@
+---
+// Alan şeması: odalar metrekareleriyle orantılı çizilir. Mimari plan değildir.
+import type { UnitType } from '../data/site';
+interface Props { t: UnitType; uid: string }
+const { t, uid } = Astro.props;
+const W = 320, H = 210;
+const living = (n: string) => /Salon|Mutfak|Balkon/.test(n);
+const wet = (n: string) => /Banyo|WC/.test(n);
+const rows = [t.rooms.filter((r) => !living(r.name)), t.rooms.filter((r) => living(r.name))];
+const total = t.rooms.reduce((a, r) => a + r.m2, 0);
+let y = 0;
+const cells = rows.flatMap((row) => {
+  const sum = row.reduce((a, r) => a + r.m2, 0);
+  const h = (sum / total) * H;
+  let x = 0;
+  const out = row.map((r) => {
+    const w = (r.m2 / sum) * W;
+    const c = { ...r, x, y, w, h };
+    x += w;
+    return c;
+  });
+  y += h;
+  return out;
+});
+---
+<svg viewBox={`-2 -2 ${W + 4} ${H + 4}`} role="img" aria-label={`${t.key} alan şeması: ${t.rooms.map((r) => `${r.name} ${r.m2} metrekare`).join(', ')}`}>
+  <defs>
+    <pattern id={`${uid}-wet`} width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 3h6" stroke="currentColor" stroke-width="0.8" opacity="0.35" /></pattern>
+  </defs>
+  {cells.map((c) => (
+    <g>
+      <rect x={c.x} y={c.y} width={c.w} height={c.h} class={/Balkon/.test(c.name) ? 'ar-room ar-out' : 'ar-room'} />
+      {wet(c.name) && <rect x={c.x} y={c.y} width={c.w} height={c.h} fill={`url(#${uid}-wet)`} stroke="none" />}
+      {c.w > 46 && c.h > 30 ? (
+        <>
+          <text x={c.x + 6} y={c.y + 15} class="ar-t">{c.name.length * 5.4 > c.w - 8 ? c.name.split(' ')[0] : c.name}</text>
+          <text x={c.x + 6} y={c.y + 28} class="ar-v">{c.m2.toLocaleString('tr-TR')} m²</text>
+        </>
+      ) : (
+        <text x={c.x + c.w / 2} y={c.y + c.h / 2 + 3} text-anchor="middle" class="ar-v">{c.m2.toLocaleString('tr-TR')}</text>
+      )}
+    </g>
+  ))}
+</svg>

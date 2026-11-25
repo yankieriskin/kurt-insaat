@@ -1,0 +1,25 @@
+---
+import { Image } from 'astro:assets';
+import type { Listing } from '../data/site';
+import { price, floorName, listingSlug, projects } from '../data/site';
+import MiniKesit from './MiniKesit.astro';
+interface Props { l: Listing; i: number; eager?: boolean }
+const { l, i, eager = false } = Astro.props;
+const proj = l.project ? projects.find((p) => p.slug === l.project) : undefined;
+---
+<li class="card" data-l data-i={i} data-tur={l.kind} data-oda={l.rooms} data-ilce={l.district} data-fiyat={l.price} data-net={l.net}>
+  <a href={`/ilanlar/${listingSlug(l)}/`}>
+    <span class="card__media">
+      <Image quality={68} src={l.images[0].img} alt={l.images[0].alt} widths={[480, 720, 960]} sizes="(max-width: 767px) 88vw, (max-width: 1023px) 50vw, 33vw" loading={eager ? 'eager' : 'lazy'} />
+      <span class={`card__kind card__kind--${l.kind}`}>{l.kind === 'satilik' ? 'Satılık' : 'Kiralık'}</span>
+      {proj?.building && l.unit && <MiniKesit floors={proj.building.floors} floor={l.unit.floor} side={l.unit.side} label={`${floorName(l.unit.floor)}, ${l.unit.side === 0 ? 'batı' : 'doğu'}`} />}
+      <span class="card__go" aria-hidden="true">İlanı aç<svg viewBox="0 0 16 16"><path d="M2 8h11M9 4l4 4-4 4" /></svg></span>
+    </span>
+    <span class="card__body">
+      <span class="card__price">{price(l.price)}{l.kind === 'kiralik' && <small> aylık</small>}</span>
+      <span class="card__t">{l.title}</span>
+      <span class="card__specs"><span>{l.rooms}</span><span>net {l.net} m²</span><span>brüt {l.brut} m²</span><span>{floorName(l.floor)}</span><span>{l.neighborhood}, {l.district}</span></span>
+      <span class="card__no">İlan no {l.no}</span>
+    </span>
+  </a>
+</li>

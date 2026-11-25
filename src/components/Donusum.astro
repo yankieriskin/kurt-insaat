@@ -1,0 +1,41 @@
+---
+// Önce ve sonra: eski riskli bina ile yerine yapılan yeni bina, aynı ölçekte.
+import { getProject } from '../data/site';
+const p = getProject('goztepe-14');
+const own = p.units.filter((u) => u.status === 'malik').length;
+const FH = 26, G = 230;
+const oldN = 4, newN = (p.building?.floors ?? 5) + 1;
+---
+<figure class="dz">
+  <svg viewBox="0 0 520 300" role="img" aria-label={`Eski bina 1974 yapımı, 4 katlı, 8 daire. Yeni bina ${newN} katlı, ${p.units.length} daire; ${own} tanesi eski maliklerin.`}>
+    <defs>
+      <pattern id="dz-h" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" class="pt-line" /></pattern>
+      <pattern id="dz-o" width="8" height="6" patternUnits="userSpaceOnUse"><line x1="0" y1="3" x2="8" y2="3" class="pt-line" /></pattern>
+    </defs>
+    <line x1="0" x2="520" y1={G} y2={G} class="ground" />
+    <rect x="0" y={G + 1} width="520" height="12" fill="url(#dz-h)" />
+    <g class="dz__old">
+      <rect x="30" y={G - oldN * FH} width="150" height={oldN * FH} class="dz__oldb" />
+      <rect x="30" y={G - oldN * FH} width="150" height={oldN * FH} fill="url(#dz-h)" />
+      {Array.from({ length: oldN }, (_, f) => <line x1="30" x2="180" y1={G - f * FH} y2={G - f * FH} class="dz__line" />)}
+      <path d={`M88 ${G - oldN * FH} l10 22 l-8 14 l12 20 l-6 18`} class="dz__crack" />
+      <text x="30" y={G + 34} class="sl__name">1974</text>
+      <text x="30" y={G + 52} class="sl__meta">4 kat, 8 daire, riskli yapı</text>
+    </g>
+    <path d={`M205 ${G - 60} h70 m-10 -8 l10 8 l-10 8`} class="dz__arrow" />
+    <g class="dz__new">
+      {Array.from({ length: newN }, (_, f) => [0, 1].map((s) => {
+        const u = p.units.find((x) => x.floor === f && x.side === s);
+        return <rect x={300 + s * 80} y={G - (f + 1) * FH} width="80" height={FH} class={u?.status === 'malik' ? 'dz__u dz__u--own' : 'dz__u dz__u--new'} />;
+      }))}
+      {Array.from({ length: newN }, (_, f) => [0, 1].map((s) => {
+        const u = p.units.find((x) => x.floor === f && x.side === s);
+        return u?.status === 'malik' ? <rect x={300 + s * 80} y={G - (f + 1) * FH} width="80" height={FH} fill="url(#dz-o)" /> : null;
+      }))}
+      <rect x="300" y={G - newN * FH} width="160" height={newN * FH} class="dz__frame" />
+      <text x="300" y={G + 34} class="sl__name">{p.delivery.split(' ')[1]}</text>
+      <text x="300" y={G + 52} class="sl__meta">{newN} kat, {p.units.length} daire, {own} tanesi eski maliklerin</text>
+    </g>
+  </svg>
+  <figcaption class="xs muted">Örnek: {p.name}. Çizgili daireler eski binanın maliklerine, turuncu kenarlılar yeni satışa.</figcaption>
+</figure>

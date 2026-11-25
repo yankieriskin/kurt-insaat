@@ -1,0 +1,76 @@
+---
+import Base from '../../layouts/Base.astro';
+import Floor from '../../components/Floor.astro';
+import StockBoard from '../../components/StockBoard.astro';
+import KotMark from '../../components/KotMark.astro';
+import ListingCard from '../../components/ListingCard.astro';
+import Icon from '../../components/Icon.astro';
+import { listings, site, wa } from '../../data/site';
+const rooms = [...new Set(listings.map((l) => l.rooms))].sort();
+const districts = [...new Set(listings.map((l) => l.district))].sort((a, b) => a.localeCompare(b, 'tr'));
+const salePrices = [[8_000_000, '8 milyon ₺'], [10_000_000, '10 milyon ₺'], [12_000_000, '12 milyon ₺'], [15_000_000, '15 milyon ₺'], [20_000_000, '20 milyon ₺']] as const;
+const rentPrices = [[35_000, '35.000 ₺'], [40_000, '40.000 ₺'], [50_000, '50.000 ₺']] as const;
+---
+<Base title="Satılık ve kiralık daireler" description={`Kurt İnşaat’ın satılık ve kiralık ${listings.length} ilanı. Her ilanda net ve brüt metrekare, kat, cephe, KDV dahil fiyat ve tapu durumu yazar.`}>
+  <Floor id="cati" code="Ç" name="İlanlar" kot="+3.00" slab={false} class="phead" label="il-h">
+    <div class="wrap g12 ph-grid">
+      <div class="ph-grid__t">
+        <p class="phead__kot" aria-hidden="true"><KotMark /><span>+3.00</span></p>
+        <h1 id="il-h" class="display">İlanlar</h1>
+        <p class="phead__p">Kendi projelerimizdeki satılık daireler ve bize emanet edilen satılık, kiralık evler. Fiyatlar KDV dahil, {site.updated} tarihli.</p>
+      </div>
+      <div class="ph-grid__s"><StockBoard /></div>
+    </div>
+  </Floor>
+  <Floor id="liste" code="Z" name="Liste" kot="±0.00">
+    <div class="wrap sec--tight" style="padding-top:0">
+      <h2 id="liste-h" class="sr-only">İlan listesi</h2>
+      <form class="fbar" data-filters aria-label="İlanları süz" role="search">
+        <div class="chips">
+          <button type="button" class="chip" data-sheet-open="suzgec" aria-haspopup="dialog"><Icon name="filter" />Süzgeç<span class="chip__n" data-fcount hidden></span></button>
+          <span class="chipsep" aria-hidden="true"></span>
+          <fieldset class="chipset">
+            <legend class="sr-only">Tür</legend>
+            <label class="chip"><input type="radio" name="tur" value="" checked />Hepsi</label>
+            <label class="chip"><input type="radio" name="tur" value="satilik" />Satılık</label>
+            <label class="chip"><input type="radio" name="tur" value="kiralik" />Kiralık</label>
+          </fieldset>
+          <span class="chipsep" aria-hidden="true"></span>
+          <fieldset class="chipset">
+            <legend class="sr-only">Oda sayısı</legend>
+            {rooms.map((r) => <label class="chip"><input type="checkbox" name="oda" value={r} />{r}</label>)}
+          </fieldset>
+        </div>
+
+        <dialog class="sheet" id="suzgec" aria-labelledby="sz-h" data-sheet>
+          <div class="sheet__grip" data-sheet-grip aria-hidden="true"><span></span></div>
+          <div class="sheet__head">
+            <h2 id="sz-h" class="sheet__h">Süzgeç</h2>
+            <button type="button" class="sheet__x" data-sheet-close aria-label="Kapat"><Icon name="close" /></button>
+          </div>
+          <div class="sheet__body">
+            <div class="field"><label for="f-ilce">İlçe</label><select id="f-ilce" name="ilce"><option value="">Hepsi</option>{districts.map((d) => <option value={d}>{d}</option>)}</select></div>
+            <div class="field"><label for="f-max">En fazla</label><select id="f-max" name="max"><option value="">Sınır yok</option><optgroup label="Satılık">{salePrices.map(([v, t]) => <option value={v}>{t}</option>)}</optgroup><optgroup label="Kiralık, aylık">{rentPrices.map(([v, t]) => <option value={v}>{t}</option>)}</optgroup></select></div>
+            <div class="field"><label for="f-sira">Sıralama</label><select id="f-sira" name="sira"><option value="yeni">Önerilen</option><option value="ucuz">Fiyat, artan</option><option value="pahali">Fiyat, azalan</option><option value="genis">En geniş</option></select></div>
+          </div>
+          <div class="sheet__foot">
+            <button type="button" class="tbtn" data-reset>Temizle</button>
+            <button type="button" class="btn btn--solid" data-sheet-close><span class="btn__label" data-count-btn>{listings.length} ilanı göster</span></button>
+          </div>
+        </dialog>
+      </form>
+      <div class="resbar"><p class="resbar__n" data-count aria-live="polite">{listings.length} ilan</p><button type="button" class="ulink small" data-reset data-reset-inline hidden>Süzgeci temizle</button></div>
+      <ul class="cards" data-results>
+        {listings.map((l, i) => <ListingCard l={l} i={i} eager={i < 2} />)}
+      </ul>
+      <div class="empty" data-empty hidden>
+        <p class="h-m">Bu süzgece uyan ilan yok.</p>
+        <p class="muted" style="margin-top:0.5rem">Süzgeci gevşetin ya da <button type="button" class="ulink" data-reset>hepsini gösterin</button>.</p>
+      </div>
+      <a class="rowlink" href={wa('Merhaba, şöyle bir ev arıyorum: ')} target="_blank" rel="noopener">
+        <span>Aradığınızı bulamadınız mı?<small>Ne aradığınızı yazın, portföye girdiğinde haber verelim.</small></span>
+        <Icon name="arrow" /><span class="sr-only"> (yeni sekmede açılır)</span>
+      </a>
+    </div>
+  </Floor>
+</Base>

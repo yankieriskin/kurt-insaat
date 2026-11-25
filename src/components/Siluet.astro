@@ -1,0 +1,56 @@
+---
+// Sokak silüeti: bütün projeler aynı ölçekte, yan yana, güney cephesinden çizilir.
+// Kat sayısı veriden gelir. Her bina kendi proje sayfasına bağlantıdır.
+import { projects, stageLabel } from '../data/site';
+const FH = 22; // bir kat
+const ground = 250;
+const gap = 26;
+const items = projects.map((p) => {
+  const floors = p.building ? p.building.floors + 1 : 3; // zemin dahil
+  const w = p.building ? 150 : 210;
+  return { p, floors, w, h: floors * FH };
+});
+let x = 30;
+const placed = items.map((it) => { const o = { ...it, x }; x += it.w + gap; return o; });
+const W = x + 4;
+---
+<figure class="siluet">
+  <svg viewBox={`0 0 ${W} ${ground + 58}`} role="group" aria-label="Projelerimiz aynı ölçekte, yan yana çizildi">
+    <defs>
+      <pattern id="sl-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" class="pt-line" /></pattern>
+    </defs>
+    <line x1="0" x2={W} y1={ground} y2={ground} class="ground" />
+    <rect x="0" y={ground + 1} width={W} height="14" fill="url(#sl-hatch)" />
+    {placed.map(({ p, floors, w, h, x }) => (
+      <a href={`/projeler/${p.slug}/`} class={`sl sl--${p.stage}`}>
+        <rect x={x - 6} y={ground - h - 40} width={w + 12} height={h + 92} class="sl__hit" />
+        <rect x={x} y={ground - h} width={w} height={h} class="sl__body" />
+        {p.stage === 'yakinda' ? (
+          <>
+            {[0, 1, 2].map((i) => <rect x={x + i * (w / 3)} y={ground - h} width={w / 3} height={h} class="sl__unit" />)}
+            {[0, 1, 2].map((i) => <path d={`M${x + i * (w / 3)} ${ground - h} l${w / 6} -16 l${w / 6} 16`} class="sl__roof" />)}
+          </>
+        ) : (
+          Array.from({ length: floors }, (_, f) => (
+            <g>
+              <line x1={x} x2={x + w} y1={ground - f * FH} y2={ground - f * FH} class="sl__slab" />
+              <rect x={x + 10} y={ground - (f + 1) * FH + 5} width={w / 2 - 22} height={FH - 9} class="sl__win" />
+              <rect x={x + w / 2 + 12} y={ground - (f + 1) * FH + 5} width={w / 2 - 22} height={FH - 9} class="sl__win" />
+            </g>
+          ))
+        )}
+        {p.stage === 'insaatta' && p.progress !== undefined && (
+          <>
+            <rect x={x} y={ground - h} width={w} height={h * (1 - p.progress / 100)} class="sl__todo" />
+            <rect x={x} y={ground - h} width={w} height={h * (1 - p.progress / 100)} fill="url(#sl-hatch)" class="sl__todo-h" />
+            <line x1={x + w + 8} x2={x + w + 8} y1={ground - h - 30} y2={ground} class="sl__crane" />
+            <line x1={x + w - 60} x2={x + w + 22} y1={ground - h - 30} y2={ground - h - 30} class="sl__crane sl__jib" style={`transform-origin:${x + w + 8}px ${ground - h - 30}px`} />
+          </>
+        )}
+        <text x={x} y={ground + 32} class="sl__name">{p.name}</text>
+        <text x={x} y={ground + 50} class="sl__meta">{p.district}, {stageLabel[p.stage].toLocaleLowerCase('tr')}</text>
+      </a>
+    ))}
+  </svg>
+  <figcaption class="xs muted">Aynı ölçekte çizildi. Taralı kısım henüz yapılmayan katlar.<span class="siluet__hint"> Çizimi yana kaydırın.</span></figcaption>
+</figure>

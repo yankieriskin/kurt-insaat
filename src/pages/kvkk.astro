@@ -1,0 +1,33 @@
+---
+import Base from '../layouts/Base.astro';
+import Floor from '../components/Floor.astro';
+import KotMark from '../components/KotMark.astro';
+import { site } from '../data/site';
+---
+<Base title="KVKK aydınlatma metni" description="Kurt İnşaat kişisel verilerin korunması aydınlatma metni: hangi bilgileri, neden ve ne kadar süre işlediğimiz ve haklarınız.">
+  <Floor id="cati" code="Ç" name="KVKK" kot="+3.00" slab={false} class="phead" label="kv-h">
+    <div class="wrap g12">
+      <div style="grid-column:1 / span 8">
+        <p class="phead__kot" aria-hidden="true"><KotMark /><span>+3.00</span></p>
+        <h1 id="kv-h" class="display h-l">Kişisel verilerin korunması aydınlatma metni</h1>
+        {site.placeholder && <p class="phead__p" style="color:var(--signal-ink);font-weight:600">Taslak metin. Yayından önce bir hukukçuya kontrol ettirilmelidir.</p>}
+      </div>
+    </div>
+  </Floor>
+  <Floor id="metin" code="Z" name="Metin" kot="±0.00">
+    <div class="wrap g12 sec">
+      <div class="prose" style="grid-column:1 / span 8">
+        <h2 id="metin-h" class="h-m">Veri sorumlusu</h2>
+        <p>{site.legalName}, {site.address.join(', ')}. E-posta: {site.email}.</p>
+        <h2 class="h-m" style="margin-top:2rem">Bu site hangi bilgileri topluyor?</h2>
+        <p>Hiçbirini. Sitede çerez, ziyaretçi sayacı ya da reklam izleyicisi yok. Formlar sunucuya gönderilmez: doldurduğunuz bilgiler telefonunuzda ya da bilgisayarınızda bir WhatsApp mesajı olarak hazırlanır. Mesajı siz gönderirseniz bize ulaşır.</p>
+        <h2 class="h-m" style="margin-top:2rem">Bize yazdığınızda ya da aradığınızda</h2>
+        <p>Adınızı, telefon numaranızı ve mesajınızdaki bilgileri, isteğinize cevap vermek ve sizinle bir satış, kiralama ya da kat karşılığı inşaat sözleşmesi kurmak için işleriz (6698 sayılı Kanun, madde 5/2-c ve 5/2-f). Bu bilgileri kimseyle paylaşmayız; yalnız sözleşme kurulursa tapu, noter ve banka gibi işlemin gerektirdiği yerlere iletilir.</p>
+        <p>Sözleşme kurulmazsa yazışmalarınızı en geç iki yıl sonra sileriz. Sözleşme kurulursa yasal saklama süreleri uygulanır.</p>
+        <h2 class="h-m" style="margin-top:2rem">Haklarınız</h2>
+        <p>Kanunun 11. maddesine göre bilgilerinizin işlenip işlenmediğini öğrenme, düzeltilmesini ya da silinmesini isteme ve itiraz etme hakkınız var. Başvurunuzu {site.email} adresine ya da ofisimize yazılı olarak iletebilirsiniz; en geç 30 gün içinde cevap veririz.</p>
+        <p>WhatsApp, Meta Platforms’un hizmetidir. Mesajlaşırken WhatsApp’ın kendi gizlilik koşulları da geçerlidir.</p>
+      </div>
+    </div>
+  </Floor>
+</Base>

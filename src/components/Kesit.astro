@@ -1,0 +1,239 @@
+---
+// Kesit: binanın cephesi (sağda) ile içi (solda) arasında gezen kesim çizgisi.
+// Sol tarafta katlar, daireler ve durumları; sağ tarafta güney cephesi. Bir daireye gelince çizgi
+// o daireyi açar, asansör kabini o kata gider. mode="link": daireler ilana gider. mode="select": seçer.
+import type { Project, Unit } from '../data/site';
+import { unitType, statusLabel, price, floorName, kot, listingSlug, listings } from '../data/site';
+
+interface Props {
+  project: Project;
+  mode?: 'link' | 'select';
+  uid?: string;
+  heading?: string;
+  priority?: boolean;
+}
+const { project: p, mode = 'link', uid = 'k', heading } = Astro.props;
+const b = p.building!;
+const N = b.floors;
+
+const W = 900;
+const bx0 = 168, bx1 = 772;
+const cx0 = 444, cx1 = 496;
+const FH = 62, T = 7, WALL = 9;
+const top = 64;
+const yG = top + 34 + (N + 1) * FH; // zemin döşemesi üstü (±0.00)
+const yL = (l: number) => yG - l * FH;
+const yBase = yL(-1);
+const H = yBase + 16 + 34;
+const levels = Array.from({ length: N + 3 }, (_, i) => i - 1); // -1 .. N+1
+
+const cell = (u: Unit) => {
+  const x0 = u.side === 0 ? bx0 + WALL : cx1 + 6;
+  const x1 = u.side === 0 ? cx0 - 6 : bx1 - WALL;
+  const y1 = yL(u.floor);
+  const y0 = yL(u.floor + 1) + T;
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+};
+
+const hrefFor = (u: Unit) => {
+  if (mode === 'select') return `#daire-${u.no}`;
+  const l = listings.find((l) => l.project === p.slug && l.unit?.no === u.no);
+  return l ? `/ilanlar/${listingSlug(l)}/` : `/projeler/${p.slug}/#daireler`;
+};
+
+const units = p.units.map((u) => {
+  const t = unitType(p, u.type);
+  const c = cell(u);
+  const info = {
+    no: u.no,
+    floor: u.floor,
+    side: u.side,
+    type: u.type,
+    net: t.net,
+    brut: t.brut,
+    facade: u.facade,
+    extra: u.extra ?? '',
+    status: u.status,
+    statusLabel: statusLabel[u.status],
+    price: u.price && u.status !== 'satildi' && u.status !== 'malik' ? price(u.price) : '',
+    floorName: floorName(u.floor),
+    x0: c.x,
+    x1: c.x + c.w,
+  };
+  const label = `${floorName(u.floor)}, ${u.facade.toLocaleLowerCase('tr')} cephe${info.price ? `, ${info.price}` : ''}`;
+  return { u, t, c, info, label, href: hrefFor(u) };
+});
+
+const initial = units.find((x) => x.u.status === 'satista') ?? units[0];
+const cabinY = (l: number) => yL(l + 1) + T + 7;
+const sale = p.units.filter((u) => u.status === 'satista').length;
+---
+<figure class="kesit" data-kesit={uid} data-mode={mode} data-bx0={bx0} data-bx1={bx1} data-fh={FH} data-t={T} data-yg={yG} data-n={N}>
+  {heading && <figcaption class="kesit__cap"><span>{heading}</span></figcaption>}
+  <div class="kesit__frame">
+    <svg class="kesit__svg" viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`${p.name} kesiti: ${p.units.length} daire, ${sale} tanesi satışta. Her daire bir bağlantıdır.`}>
+      <defs>
+        <pattern id={`${uid}-sold`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" class="pt-line" /></pattern>
+        <pattern id={`${uid}-opt`} width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1" class="pt-dot" /></pattern>
+        <pattern id={`${uid}-own`} width="8" height="6" patternUnits="userSpaceOnUse"><line x1="0" y1="3" x2="8" y2="3" class="pt-line" /></pattern>
+        <pattern id={`${uid}-earth`} width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><line x1="0" y1="0" x2="0" y2="14" class="pt-earth" /><line x1="7" y1="3" x2="7" y2="7" class="pt-earth" /></pattern>
+        <pattern id={`${uid}-wood`} width="4" height="10" patternUnits="userSpaceOnUse"><line x1="2" y1="0" x2="2" y2="10" class="pt-wood" /></pattern>
+        <linearGradient id={`${uid}-glass`} x1="0" y1="0" x2="0.35" y2="1"><stop offset="0" class="gl-a" /><stop offset="0.55" class="gl-b" /><stop offset="1" class="gl-c" /></linearGradient>
+        <clipPath id={`${uid}-clip`}><rect data-kesit-clip x={bx0 + (bx1 - bx0) * 0.5} y="0" width={W} height={H} /></clipPath>
+      </defs>
+
+      <!-- Kot çizgileri ve etiketleri (her zaman görünür) -->
+      <g class="kot-lines" aria-hidden="true">
+        {levels.map((l) => (
+          <g>
+            <line x1="40" x2={bx0 - 6} y1={yL(l)} y2={yL(l)} class="kot-line" />
+            <path d={`M${126} ${yL(l) - 11} h14 l-7 11 z`} class={l === 0 ? 'kot-tri kot-tri--zero' : 'kot-tri'} />
+            <text x="118" y={yL(l) - 4} text-anchor="end" class="kot-txt">{kot(l * b.floorHeight)}</text>
+            {l >= 0 && l <= N && <text x={bx1 + 22} y={yL(l) - FH / 2 + 4} class="lvl-txt">{l === 0 ? 'Zemin' : `${l}. kat`}</text>}
+          </g>
+        ))}
+        <text x={bx1 + 22} y={yL(-1) - FH / 2 + 4} class="lvl-txt">Bodrum</text>
+        <text x={bx1 + 22} y={yL(N + 1) - 12} class="lvl-txt">Çatı</text>
+      </g>
+
+      <!-- KESİT: içerisi -->
+      <g class="sect">
+        <rect x="0" y={yG + T} width={bx0 - 10} height={H - yG} fill={`url(#${uid}-earth)`} class="earth" />
+        <rect x={bx1 + 10} y={yG + T} width={W - bx1} height={H - yG} fill={`url(#${uid}-earth)`} class="earth" />
+        <line x1="0" x2={W} y1={yG} y2={yG} class="ground" />
+        <rect x={bx0 - 10} y={yBase} width={bx1 - bx0 + 20} height="16" class="poche" />
+        <rect x={bx0 - 10} y={yG} width="10" height={yBase - yG} class="poche" />
+        <rect x={bx1} y={yG} width="10" height={yBase - yG} class="poche" />
+        <text x={(bx0 + cx0) / 2} y={yBase - 22} text-anchor="middle" class="room-txt">Otopark</text>
+        <text x={(cx1 + bx1) / 2} y={yBase - 22} text-anchor="middle" class="room-txt">Depolar</text>
+        <rect x={bx0 + 40} y={yBase - 16} width="62" height="16" class="car" />
+        <rect x={bx0 + 120} y={yBase - 16} width="62" height="16" class="car" />
+
+        {Array.from({ length: N + 1 }, (_, l) => (
+          <g>
+            <rect x={bx0} y={yL(l + 1) + T} width={WALL} height={FH - T} class="poche" />
+            <rect x={bx1 - WALL} y={yL(l + 1) + T} width={WALL} height={FH - T} class="poche" />
+            <rect x={cx0 - 6} y={yL(l + 1) + T} width="6" height={FH - T} class="poche" />
+            <rect x={cx1} y={yL(l + 1) + T} width="6" height={FH - T} class="poche" />
+            <line x1={bx0 + (cx0 - bx0) * 0.46} x2={bx0 + (cx0 - bx0) * 0.46} y1={yL(l + 1) + T} y2={yL(l) - 24} class="wall-thin" />
+            <line x1={cx1 + (bx1 - cx1) * 0.52} x2={cx1 + (bx1 - cx1) * 0.52} y1={yL(l + 1) + T} y2={yL(l) - 24} class="wall-thin" />
+          </g>
+        ))}
+        <rect x={cx0 - 6} y={yG} width="6" height={yBase - yG} class="poche" />
+        <rect x={cx1} y={yG} width="6" height={yBase - yG} class="poche" />
+
+        {units.map(({ u, c, info, label, href }) => (
+          <a href={href} class={`u u--${u.status}`} data-unit={JSON.stringify(info)} id={mode === 'select' ? `kesit-d${u.no}` : undefined}>
+            <desc>{label}</desc>
+            <rect x={c.x} y={c.y} width={c.w} height={c.h} class="u__base" />
+            {u.status !== 'satista' && <rect x={c.x} y={c.y} width={c.w} height={c.h} fill={`url(#${uid}-${u.status === 'satildi' ? 'sold' : u.status === 'opsiyon' ? 'opt' : 'own'})`} class="u__pat" />}
+            <rect x={c.x} y={c.y} width={c.w} height={c.h} class="u__hit" />
+            {u.status === 'satista' && <rect x={c.x + 10} y={c.y + 10} width="8" height="8" class="u__mark" />}
+            <text x={c.x + (u.status === 'satista' ? 26 : 10)} y={c.y + 19} class="u__no">Daire {u.no}</text>
+            <text x={c.x + 10} y={c.y + 38} class="u__meta">{u.type}, {info.net} m²</text>
+            <text x={c.x + c.w - 10} y={c.y + 19} text-anchor="end" class="u__st">{statusLabel[u.status]}</text>
+          </a>
+        ))}
+
+        <g class="cabin" data-kesit-cabin data-cab-floor={initial.u.floor} transform={`translate(0 ${cabinY(initial.u.floor)})`}>
+          <rect x={cx0 + 6} y="0" width={cx1 - cx0 - 12} height={FH - T - 14} class="cabin__box" />
+          <line x1={(cx0 + cx1) / 2} x2={(cx0 + cx1) / 2} y1="2" y2={FH - T - 16} class="cabin__seam" />
+        </g>
+        <line x1={(cx0 + cx1) / 2} x2={(cx0 + cx1) / 2} y1={yL(N + 1) + T} y2={cabinY(initial.u.floor)} class="cable" data-kesit-cable />
+
+        {levels.filter((l) => l >= 0).map((l) => (
+          <rect x={bx0 - 2} y={yL(l)} width={bx1 - bx0 + 4} height={T} class="poche" />
+        ))}
+        <rect x={bx0 - 2} y={yL(N + 1) - 18} width="9" height="18" class="poche" />
+        <rect x={bx1 - 7} y={yL(N + 1) - 18} width="9" height="18" class="poche" />
+        <rect x={cx0 - 14} y={yL(N + 1) - 40} width={cx1 - cx0 + 28} height="40" class="roofbox" />
+        {[0, 1, 2, 3].map((i) => <path d={`M${bx0 + 30 + i * 52} ${yL(N + 1)} l10 -16 h34 l-10 16`} class="solar" />)}
+        {[0, 1, 2, 3].map((i) => <path d={`M${cx1 + 40 + i * 52} ${yL(N + 1)} l10 -16 h34 l-10 16`} class="solar" />)}
+      </g>
+
+      <!-- CEPHE: güney görünüşü, kesim çizgisinin sağında -->
+      <g class="elev" clip-path={`url(#${uid}-clip)`} aria-hidden="true">
+        <rect x={bx0 - 2} y={yL(N + 1) - 20} width={bx1 - bx0 + 4} height={yG - yL(N + 1) + 20} class="elev__wall" />
+        <rect x={cx0 - 16} y={yL(N + 1) - 44} width={cx1 - cx0 + 32} height="26" class="elev__wall" />
+        {[0, 1, 2, 3, 4].map((i) => <line x1={cx0 - 10 + i * ((cx1 - cx0 + 20) / 4)} x2={cx0 - 10 + i * ((cx1 - cx0 + 20) / 4)} y1={yL(N + 1) - 40} y2={yL(N + 1) - 22} class="elev__louver" />)}
+        <rect x={bx0 - 6} y={yL(N + 1) - 22} width={bx1 - bx0 + 12} height="4" class="elev__slab" />
+        {/* ahşap görünümlü dikey şeritler: köşelerde ve çekirdekte */}
+        {[[bx0 + 2, 26], [cx0 - 16, cx1 - cx0 + 32], [bx1 - 28, 26]].map(([x, w]) => (
+          <>
+            <rect x={x} y={yL(N + 1) - 18} width={w} height={yG - yL(N + 1) + 18} class="elev__woodbase" />
+            <rect x={x} y={yL(N + 1) - 18} width={w} height={yG - yL(N + 1) + 18} fill={`url(#${uid}-wood)`} />
+          </>
+        ))}
+        {Array.from({ length: N + 1 }, (_, l) => {
+          const top = yL(l + 1) + T;
+          const bot = yL(l);
+          const bays = [[bx0 + 34, cx0 - 22], [cx1 + 22, bx1 - 34]];
+          return (
+            <g>
+              {bays.map(([a, z]) => {
+                const w = z - a;
+                const gy0 = top + (l === 0 ? 10 : 6);
+                return (
+                  <>
+                    <rect x={a + 4} y={gy0} width={w - 8} height={bot - gy0 - 1} fill={`url(#${uid}-glass)`} class="win" />
+                    {[1, 2, 3].map((k) => <line x1={a + 4 + (k * (w - 8)) / 4} x2={a + 4 + (k * (w - 8)) / 4} y1={gy0} y2={bot - 1} class="win__mull" />)}
+                    <line x1={a + 4} x2={z - 4} y1={gy0 + 9} y2={gy0 + 9} class="win__mull win__mull--t" />
+                    {l > 0 && (
+                      <>
+                        <rect x={a - 6} y={bot - 21} width={w + 12} height="21" class="rail" />
+                        {Array.from({ length: Math.floor((w + 12) / 34) + 1 }, (_, k) => <line x1={a - 6 + k * ((w + 12) / Math.floor((w + 12) / 34))} x2={a - 6 + k * ((w + 12) / Math.floor((w + 12) / 34))} y1={bot - 21} y2={bot} class="rail__post" />)}
+                        <line x1={a - 6} x2={z + 6} y1={bot - 21} y2={bot - 21} class="rail__top" />
+                      </>
+                    )}
+                  </>
+                );
+              })}
+              {l > 0 && <rect x={bx0 - 14} y={bot} width={bx1 - bx0 + 28} height="6" class="elev__slab" />}
+            </g>
+          );
+        })}
+        <rect x={cx0 - 6} y={yG - 50} width={cx1 - cx0 + 12} height="5" class="elev__slab" />
+        <rect x={cx0 + 4} y={yG - 45} width={cx1 - cx0 - 8} height="45" class="entrance" />
+        <line x1={(cx0 + cx1) / 2} x2={(cx0 + cx1) / 2} y1={yG - 45} y2={yG} class="win__mull" />
+        <g class="olive">
+          <circle cx={bx0 + 22} cy={yG - 50} r="20" class="tree" />
+          <circle cx={bx0 + 44} cy={yG - 60} r="22" class="tree" />
+          <circle cx={bx0 + 62} cy={yG - 46} r="17" class="tree" />
+          <path d={`M${bx0 + 42} ${yG} q-2 -18 2 -32 M${bx0 + 42} ${yG - 22} l-12 -10`} class="trunk" />
+        </g>
+        <g class="olive">
+          <circle cx={bx1 - 72} cy={yG - 44} r="17" class="tree" />
+          <circle cx={bx1 - 52} cy={yG - 54} r="19" class="tree" />
+          <circle cx={bx1 - 36} cy={yG - 40} r="14" class="tree" />
+          <path d={`M${bx1 - 54} ${yG} q2 -16 -2 -28`} class="trunk" />
+        </g>
+        <path d={`M${cx1 + 40} ${yG} q12 -18 24 0 q12 -16 24 0 q12 -20 24 0 q12 -15 24 0`} class="shrub" />
+        <path d={`M${bx0 + 96} ${yG} q12 -16 24 0 q12 -18 24 0 q12 -14 24 0`} class="shrub" />
+      </g>
+
+      <!-- Kesim çizgisi A-A -->
+      <g class="cut" data-kesit-cut transform={`translate(${bx0 + (bx1 - bx0) * 0.5} 0)`} aria-hidden="true">
+        <line x1="0" x2="0" y1="34" y2={H - 20} class="cut__line" />
+        <circle cx="0" cy="22" r="13" class="cut__ring" />
+        <text x="0" y="27" text-anchor="middle" class="cut__a">A</text>
+        <path d="M-15 22 l-12 -7 v14 z" class="cut__arrow" />
+        <circle cx="0" cy={H - 14} r="13" class="cut__ring" />
+        <text x="0" y={H - 9} text-anchor="middle" class="cut__a">A</text>
+        <path d={`M-15 ${H - 14} l-12 -7 v14 z`} class="cut__arrow" />
+      </g>
+    </svg>
+  </div>
+  <div class="kesit__foot">
+    <p class="kesit__readout" data-kesit-readout aria-live="polite">
+      <strong data-r="title">Daire {initial.u.no}</strong>
+      <span data-r="line">{floorName(initial.u.floor)}, {initial.u.type}, net {initial.info.net} m², {initial.u.facade.toLowerCase()} cephe</span>
+      <span data-r="price" class="kesit__price">{initial.info.price ? `${initial.info.price}, ${statusLabel[initial.u.status].toLowerCase()}` : statusLabel[initial.u.status]}</span>
+    </p>
+    <ul class="kesit__legend" aria-label="Gösterim">
+      <li><span class="sw sw--satista"></span>Satışta</li>
+      <li><span class="sw sw--opsiyon"></span>Opsiyonlu</li>
+      <li><span class="sw sw--satildi"></span>Satıldı</li>
+      {p.units.some((u) => u.status === 'malik') && <li><span class="sw sw--malik"></span>Hak sahibi</li>}
+    </ul>
+  </div>
+</figure>

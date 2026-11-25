@@ -1,0 +1,107 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Floor from '../components/Floor.astro';
+import Btn from '../components/Btn.astro';
+import Donusum from '../components/Donusum.astro';
+import KotMark from '../components/KotMark.astro';
+import { transformation as tr, site, projects, images } from '../data/site';
+const done = projects.filter((p) => p.model.startsWith('Kentsel') && p.stage === 'teslim');
+const going = projects.filter((p) => p.model.startsWith('Kentsel') && p.stage === 'insaatta');
+const ticks = [0, 6, 12, 18, 24, tr.months];
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: tr.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+<Base title="Kentsel dönüşüm, kat karşılığı" description="Binanız kentsel dönüşüme girecekse: kat karşılığı teklifimizde net metrekare, kira yardımı, teslim tarihi ve tapu devrinin hangi aşamaya bağlı olduğu yazılı olur." jsonLd={faqLd}>
+  <Floor id="cati" code="Ç" name="Kentsel dönüşüm" kot="+12.00" slab={false} class="phead" label="kd-h">
+    <div class="wrap g12 ph-grid">
+      <div class="ph-grid__t">
+        <p class="phead__kot" aria-hidden="true"><KotMark /><span>+12.00</span></p>
+        <h1 id="kd-h" class="display">Eski binanızın yerine, yazılı bir sözle.</h1>
+        <p class="phead__p">Kat karşılığı çalışıyoruz. Ön görüşme, bina tespiti ve teklif ücretsizdir. Teklifte yazmayan hiçbir şeyi sözleşmede sizden istemeyiz.</p>
+        <div class="btns" style="margin-top:1.8rem"><Btn href="#basvuru" size="lg">Binanızı değerlendirelim</Btn></div>
+      </div>
+      <div class="ph-grid__s"><Donusum /></div>
+    </div>
+  </Floor>
+
+  <Floor id="teklif" code="3" name="Teklifte ne yazar" kot="+9.00">
+    <div class="wrap g12 sec split">
+      <div class="split__a">
+        <h2 id="teklif-h" class="display h-l" data-split="lines">Teklifimizde yazanlar.</h2>
+        <p class="muted">Bazı teklifler yalnız “size şu kadar metrekare” der. Metrekarenin net mi brüt mü olduğu, hangi katta ve hangi cephede olduğu yazmıyorsa iki teklifi karşılaştıramazsınız.</p>
+      </div>
+      <ol class="antet antet--2 split__b" style="margin-top:0">
+        {tr.offer.map((o, i) => (
+          <li class="antet__cell">
+            <p class="antet__k"><span>Madde {i + 1}</span></p>
+            <p class="antet__v">{o}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </Floor>
+
+  <Floor id="takvim" code="2" name="İş programı" kot="+6.00">
+    <div class="wrap g12 sec">
+      <div class="dz__head">
+        <h2 id="takvim-h" class="display h-l" data-split="lines">İlk görüşmeden anahtara.</h2>
+        <p class="muted" style="margin-top:1rem">On daireli bir bina için tahmini takvim. Ruhsat süresi belediyeye, inşaat süresi binanın büyüklüğüne göre değişir.</p>
+      </div>
+      <div class="gantt" data-bars>
+        <div class="gantt__scale" aria-hidden="true">
+          <span>İş</span>
+          <span class="gantt__ticks">{ticks.map((t) => <span style={`left:${(t / tr.months) * 100}%`}>{t}. ay</span>)}</span>
+        </div>
+        <ol>
+          {tr.steps.map((s) => {
+            const len = s.to - s.from;
+            return (
+              <li class="gantt__row">
+                <p class="gantt__t">{s.title}<small>{s.text}</small></p>
+                <div class="gantt__track" role="img" aria-label={`${s.from}. aydan ${s.to}. aya, ${len} ay`}>
+                  <span class={len > 6 ? 'gantt__bar gantt__bar--long' : 'gantt__bar'} data-bar data-flip={s.to > 22 ? '' : undefined} style={`left:${(s.from / tr.months) * 100}%;width:${(len / tr.months) * 100}%`}><span class="gantt__months">{len} ay</span></span>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    </div>
+  </Floor>
+
+  <Floor id="sorular" code="1" name="Sorular" kot="+3.00">
+    <div class="wrap g12 sec split">
+      <div class="split__a">
+        <h2 id="sorular-h" class="display h-l" data-split="lines">Maliklerin sorduğu.</h2>
+        <p class="muted">Bitirdiğimiz dönüşüm binası: {done.map((p) => <a class="ulink" href={`/projeler/${p.slug}/`}>{p.name}</a>)}. Süren: {going.map((p) => <a class="ulink" href={`/projeler/${p.slug}/`}>{p.name}</a>)}. Adreslerini veririz; gidip oturanlara ve malik komşularınıza sorabilirsiniz.</p>
+        <figure style="margin-top:2rem;aspect-ratio:3/2;overflow:clip" data-reveal="doors"><Image quality={68} src={images.goztepeSantiye} alt="Göztepe 14 şantiyesi: iskele ve güvenlik filesi" widths={[600, 900]} sizes="(max-width: 1023px) 100vw, 33vw" loading="lazy" style="width:100%;height:100%;object-fit:cover" /></figure>
+      </div>
+      <div class="split__b faq">{tr.faq.map((f) => <details><summary>{f.q}</summary><p>{f.a}</p></details>)}</div>
+    </div>
+  </Floor>
+
+  <Floor id="basvuru" code="Z" name="Başvuru" kot="±0.00">
+    <div class="wrap g12 sec split">
+      <div class="split__a">
+        <h2 id="basvuru-h" class="display h-l" data-split="lines">Binanızı anlatın.</h2>
+        <p class="muted">Birkaç bilgi yeterli. Hazırlarsanız şu belgeler işimizi hızlandırır:</p>
+        <ul class="dist" style="columns:1;margin-top:1rem">{tr.documents.map((d) => <li><span>{d}</span></li>)}</ul>
+      </div>
+      <form class="form split__b" data-wa={site.whatsapp.number} data-msg="Merhaba, binamızın kentsel dönüşümü için görüşmek istiyorum.">
+        <div class="field full"><label for="kd-adres">Binanın adresi (mahalle ve sokak yeterli)</label><input id="kd-adres" name="adres" required /></div>
+        <div class="field"><label for="kd-daire">Daire sayısı</label><input id="kd-daire" name="daire" inputmode="numeric" /></div>
+        <div class="field"><label for="kd-yil">Yapım yılı (isteğe bağlı)</label><input id="kd-yil" name="yil" inputmode="numeric" /></div>
+        <div class="field"><label for="kd-rapor">Riskli yapı raporu</label><select id="kd-rapor" name="rapor"><option value="">Bilmiyorum</option><option>Var</option><option>Yok</option><option>Başvuru yapıldı</option></select></div>
+        <div class="field"><label for="kd-ad">Adınız</label><input id="kd-ad" name="ad" autocomplete="name" required /></div>
+        <div class="field full"><label for="kd-tel">Telefonunuz</label><input id="kd-tel" name="tel" type="tel" inputmode="tel" autocomplete="tel" required /></div>
+        <p class="form__note full">Gönder’e bastığınızda WhatsApp açılır ve yazdıklarınız mesaj olarak hazırlanır. Mesajı siz gönderene kadar bize hiçbir bilgi ulaşmaz. Ayrıntı için <a class="ulink" href="/kvkk/">KVKK aydınlatma metni</a>.</p>
+        <button class="btn btn--solid btn--md full" type="submit"><span class="btn__label">WhatsApp’ta hazırla ve gönder</span><svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" /></svg></button>
+        <p class="form__sent full" data-sent hidden>WhatsApp açıldı. Mesajı gönderdiğinizde ön görüşme için aynı gün arayacağız.</p>
+      </form>
+    </div>
+  </Floor>
+</Base>

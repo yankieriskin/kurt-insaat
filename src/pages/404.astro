@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+import Btn from '../components/Btn.astro';
+import { ledSVG } from '../motion/led';
+import { nav } from '../data/site';
+---
+<Base title="Bu kat yok" description="Aradığınız sayfa bulunamadı. Asansör bu kata çıkmıyor.">
+  <section class="wrap nf" data-floor="--" data-floor-name="Bu kat yok" data-kot="?" id="yok" aria-labelledby="nf-h">
+    <div class="nf__screen" aria-hidden="true"><span set:html={ledSVG('-')} /><span set:html={ledSVG('--')} /></div>
+    <h1 id="nf-h" class="display h-xl">Bu kat yok.</h1>
+    <p class="phead__p">Asansör bu kata çıkmıyor. Adres yanlış yazılmış olabilir ya da satılan veya kiralanan bir ilanın sayfası kaldırılmıştır. Satılan daireler proje sayfalarındaki kesitte görünmeye devam eder.</p>
+    <div class="btns" style="margin-top:2rem">
+      <Btn href="/">Çatıya dön</Btn>
+      {nav.slice(0, 2).map((n) => <Btn href={n.href} variant="line">{n.label}</Btn>)}
+    </div>
+  </section>
+</Base>

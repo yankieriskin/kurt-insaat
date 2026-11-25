@@ -1,0 +1,138 @@
+---
+import { Image, getImage } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Floor from '../../components/Floor.astro';
+import Btn from '../../components/Btn.astro';
+import KotMark from '../../components/KotMark.astro';
+import ListingCard from '../../components/ListingCard.astro';
+import AreaPlan from '../../components/AreaPlan.astro';
+import Icon from '../../components/Icon.astro';
+import { listings, listingSlug, price, floorName, site, wa, projects, unitType, m2 } from '../../data/site';
+import type { Listing } from '../../data/site';
+
+export function getStaticPaths() {
+  return listings.map((l) => ({ params: { no: listingSlug(l) }, props: { l } }));
+}
+const { l } = Astro.props as { l: Listing };
+const proj = l.project ? projects.find((p) => p.slug === l.project) : undefined;
+const t = proj && l.unit ? unitType(proj, l.unit.type) : undefined;
+const full = await Promise.all(l.images.map((g) => getImage({ src: g.img, width: 1600, format: 'webp', quality: 70 })));
+const og = await getImage({ src: l.images[0].img, width: 1200, height: 630, fit: 'cover', format: 'jpg' });
+const similar = listings.filter((x) => x.no !== l.no && x.kind === l.kind).sort((a, b) => Math.abs(a.price - l.price) - Math.abs(b.price - l.price)).slice(0, 3);
+const kindLabel = l.kind === 'satilik' ? 'Satılık' : 'Kiralık';
+const priceLine = l.kind === 'kiralik' ? `${price(l.price)} aylık` : price(l.price);
+const desc = `${kindLabel} ${l.rooms}, ${l.neighborhood} ${l.district}. Net ${l.net} m², ${floorName(l.floor).toLocaleLowerCase('tr')}, ${priceLine}. İlan no ${l.no}.`;
+const msg = `Merhaba, ${l.no} numaralı ilan (${l.title}, ${priceLine}) hakkında bilgi almak istiyorum.`;
+const spec: [string, string][] = [
+  ['İlan no', l.no],
+  ['İlan tarihi', l.date],
+  ['Oda', l.rooms],
+  ['Net alan', m2(l.net)],
+  ['Brüt alan', m2(l.brut)],
+  ['Bulunduğu kat', floorName(l.floor)],
+  ['Kat sayısı', String(l.totalFloors)],
+  ['Bina yaşı', l.age],
+  ['Cephe', l.facade],
+  ['Isınma', l.heating],
+  ['Otopark', l.parking],
+  ['Eşyalı', l.furnished ? 'Evet' : 'Hayır'],
+  ['Tapu durumu', l.deed],
+  ...(l.kind === 'satilik' ? ([['Krediye uygun', l.credit ? 'Evet' : 'Hayır']] as [string, string][]) : []),
+  ...(l.dues ? ([['Aidat', price(l.dues)]] as [string, string][]) : []),
+  ...(l.deposit ? ([['Depozito', l.deposit]] as [string, string][]) : []),
+  ['Kimden', site.name],
+];
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Offer',
+  name: l.title,
+  price: l.price,
+  priceCurrency: 'TRY',
+  availability: 'https://schema.org/InStock',
+  itemOffered: { '@type': 'Apartment', name: l.title, numberOfRooms: l.rooms, floorSize: { '@type': 'QuantitativeValue', value: l.net, unitCode: 'MTK' }, address: { '@type': 'PostalAddress', addressLocality: `${l.neighborhood}, ${l.district}`, addressRegion: 'İstanbul', addressCountry: 'TR' } },
+  seller: { '@type': 'Organization', name: site.name },
+};
+---
+<Base title={`${l.title}, ${priceLine}`} description={desc} image={og.src} jsonLd={jsonLd}>
+  <Floor id="cati" code="Ç" name={l.no} kot="+6.00" slab={false} class="ld-hero" label="ld-h">
+    <div class="wrap g12 ld-top">
+      <div class="ld-media">
+        <div class="ld-gal" data-gallery>
+          <ul class="rail rail--full" id="r-foto" data-rail aria-label="Fotoğraflar">
+            {l.images.map((g, i) => (
+              <li>
+                <a href={full[i].src} data-full={full[i].src} data-caption={g.alt} aria-label={`Büyüt: ${g.alt}`}>
+                  <Image quality={68} src={g.img} alt={g.alt} widths={[480, 800, 1200]} sizes="(max-width: 1023px) 100vw, 64vw" loading={i === 0 ? 'eager' : 'lazy'} fetchpriority={i === 0 ? 'high' : undefined} data-critical={i === 0 ? '' : undefined} />
+                </a>
+              </li>
+            ))}
+          </ul>
+          <span class={`ld-gal__kind ld-gal__kind--${l.kind}`}>{kindLabel}</span>
+          {l.images.length > 1 && <p class="ld-gal__count" aria-hidden="true"><span data-rail-count="r-foto">1</span> / {l.images.length}</p>}
+          {l.images.length > 1 && <div class="rnav"><button type="button" data-rail-prev="r-foto" aria-label="Önceki fotoğraf" aria-controls="r-foto"><Icon name="prev" /></button><button type="button" data-rail-next="r-foto" aria-label="Sonraki fotoğraf" aria-controls="r-foto"><Icon name="next" /></button></div>}
+        </div>
+        <p class="xs muted ld-gal__note">Görseller temsilidir. Büyütmek için fotoğrafa dokunun.</p>
+      </div>
+      <aside class="ld-side" aria-label="Fiyat ve iletişim">
+        <ol class="crumbs" aria-label="Konum"><li><a href="/">Ana sayfa</a></li><li><a href="/ilanlar/">İlanlar</a></li><li aria-current="page">{l.no}</li></ol>
+        <p class="ld-loc">{kindLabel}, {l.neighborhood}, {l.district} · <span class="muted">İlan no {l.no}</span></p>
+        <h1 id="ld-h" class="display">{l.title}</h1>
+        <p class="ld-price">{price(l.price)}{l.kind === 'kiralik' && <small> aylık</small>}</p>
+        <dl class="tiles">
+          <div><dt>Oda</dt><dd>{l.rooms}</dd></div>
+          <div><dt>Net / brüt</dt><dd>{l.net} / {l.brut} m²</dd></div>
+          <div><dt>Kat</dt><dd>{floorName(l.floor)}</dd></div>
+          <div><dt>{l.kind === 'satilik' ? 'Fiyat' : 'Depozito'}</dt><dd>{l.kind === 'satilik' ? 'KDV dahil' : (l.deposit ?? 'Sorun')}</dd></div>
+        </dl>
+        <div class="ld-acts">
+          <Btn href={wa(msg)} external>WhatsApp’tan sorun</Btn>
+          <Btn href={site.phone.href} variant="line">Arayın: {site.phone.label}</Btn>
+          <p class="xs muted">Mesajınızda ilan numarası ({l.no}) hazır yazılı gelir.</p>
+        </div>
+      </aside>
+    </div>
+    <dialog class="lb" data-lightbox aria-label="Görsel görüntüleyici">
+      <div class="lb__top"><span data-lb-num></span><button type="button" data-lb-close>Kapat</button></div>
+      <div class="lb__img"><img alt="" width="1800" height="1200" /></div>
+      <div class="lb__bot"><button type="button" data-lb-prev>Önceki</button><span data-lb-cap class="small"></span><button type="button" data-lb-next>Sonraki</button></div>
+    </dialog>
+  </Floor>
+
+  <Floor id="bilgiler" code="1" name="Bilgiler" kot="+3.00">
+    <div class="wrap g12 sec split">
+      <div class="split__a">
+        <h2 id="bilgiler-h" class="display h-l" data-split="lines">Ev hakkında.</h2>
+        <div class="prose" style="margin-top:1rem">{l.text.map((p) => <p>{p}</p>)}</div>
+        {proj && <p style="margin-top:1.2rem"><a class="ulink" href={`/projeler/${proj.slug}/${l.unit ? '#daireler' : ''}`}>{proj.name} proje sayfası{l.unit ? ', kesitte bu daire' : ''}</a></p>}
+      </div>
+      <div class="split__b">
+        <dl class="spec">{spec.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+        {t && (
+          <div style="margin-top:2.5rem">
+            <h3 class="h-m" style="margin-bottom:1rem">{t.key} alan şeması</h3>
+            <div style="max-width:520px"><AreaPlan t={t} uid="ld" /></div>
+            <p class="xs muted" style="margin-top:0.6rem">Odalar metrekareleriyle orantılı çizildi; mimari plan değildir. Ölçülü planı WhatsApp’tan isteyin.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </Floor>
+
+  {similar.length > 0 && (
+    <Floor id="benzer" code="Z" name="Benzer ilanlar" kot="±0.00">
+      <div class="wrap sec--tight">
+        <div class="rhead">
+          <div><h2 id="benzer-h" class="h-m">Fiyatı yakın {l.kind === 'satilik' ? 'satılık' : 'kiralık'} ilanlar</h2></div>
+          <div class="rhead__side"><a class="more" href={`/ilanlar/?tur=${l.kind}`}>Tümü<Icon name="arrow" /></a></div>
+        </div>
+        <ul class="rail" id="r-benzer" data-rail aria-label="Benzer ilanlar">{similar.map((x, i) => <ListingCard l={x} i={i} />)}</ul>
+      </div>
+    </Floor>
+  )}
+
+  <Fragment slot="actbar">
+    <a class="ab__ic" href="/ilanlar/" aria-label="İlanlara dön"><Icon name="back" /></a>
+    <a class="ab__ic" href={site.phone.href} aria-label={`Arayın: ${site.phone.label}`}><Icon name="phone" /></a>
+    <a class="ab__main" href={wa(msg)} target="_blank" rel="noopener"><span class="ab__t"><b>WhatsApp’tan sorun</b><small>{l.no}, {priceLine}</small></span><Icon name="arrow" /><span class="sr-only"> (yeni sekmede açılır)</span></a>
+  </Fragment>
+</Base>

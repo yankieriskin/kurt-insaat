@@ -1,0 +1,21 @@
+---
+// Pafta çizgisiyle çizilmiş küçük simgeler (24×24, kare uçlu çizgi).
+interface Props { name: 'home' | 'key' | 'crane' | 'swap' | 'chat' | 'phone' | 'pin' | 'mail' | 'back' | 'filter' | 'arrow' | 'close' | 'prev' | 'next'; class?: string }
+const { name, class: cls } = Astro.props;
+---
+<svg class:list={['ico', cls]} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  {name === 'home' && <><path d="M4 19h16" /><path d="M7.5 7.5h9l-4.5 7z" /></>}
+  {name === 'key' && <><circle cx="8" cy="12" r="3.6" /><path d="M11.6 12H21M17.5 12v3.2M20.5 12v2.2" /></>}
+  {name === 'crane' && <><path d="M7 21V4M3 7h18M7 4l-3 3M14 7v4" /><path d="M12.5 11h3v2.5h-3z" /><path d="M3.5 21h7" /></>}
+  {name === 'swap' && <><path d="M3.5 20h17" /><path d="M5 20v-7h5v7" stroke-dasharray="2 1.6" /><path d="M14 20V6h5.5v14" /><path d="M8 9.5V6.5h3.5M10 4.6l1.8 1.9-1.8 1.9" /></>}
+  {name === 'chat' && <><path d="M4 5h16v11H11l-4.5 3.5V16H4z" /><path d="M8 9.5h8M8 12.5h5" /></>}
+  {name === 'phone' && <path d="M8.2 3.8 5 4.6c-.6 4.9 4.7 13.4 13.9 14.4l1-3.3-3.6-1.7-1.8 1.9c-2.5-1.2-4.4-3.2-5.5-5.6l1.9-1.8z" />}
+  {name === 'pin' && <><path d="M12 21s-6.5-6.4-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.6 12 21 12 21z" /><circle cx="12" cy="9.8" r="2.3" /></>}
+  {name === 'mail' && <><path d="M3.5 6h17v12h-17z" /><path d="m3.5 6.5 8.5 6.5 8.5-6.5" /></>}
+  {name === 'back' && <path d="M20 12H5M10.5 6 4.5 12l6 6" />}
+  {name === 'filter' && <><path d="M4 7h16M7 12h10M10 17h4" /></>}
+  {name === 'arrow' && <path d="M4 12h15M13.5 6l6 6-6 6" />}
+  {name === 'close' && <path d="M6 6l12 12M18 6 6 18" />}
+  {name === 'prev' && <path d="M14.5 5.5 8 12l6.5 6.5" />}
+  {name === 'next' && <path d="M9.5 5.5 16 12l-6.5 6.5" />}
+</svg>

@@ -1,0 +1,49 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Floor from '../components/Floor.astro';
+import Btn from '../components/Btn.astro';
+
+import KotMark from '../components/KotMark.astro';
+import { site, wa, images } from '../data/site';
+---
+<Base title="İletişim" description={`Kurt İnşaat ofisi: ${site.address.join(', ')}. Telefon ${site.phone.label}, WhatsApp ${site.whatsapp.label}. Hafta içi 09.00 ile 18.30 arası açığız.`}>
+  <Floor id="cati" code="Ç" name="İletişim" kot="+3.00" slab={false} class="phead" label="ic-h">
+    <div class="wrap g12 ph-grid">
+      <div class="ph-grid__t">
+        <p class="phead__kot" aria-hidden="true"><KotMark /><span>+3.00</span></p>
+        <h1 id="ic-h" class="display">İletişim</h1>
+        <p class="phead__p">En hızlı yol WhatsApp. Mesai saatinde bir saat içinde, akşam yazarsanız ertesi sabah dönüyoruz.</p>
+      </div>
+      <div class="ph-grid__s"><figure class="ph-img"><Image quality={68} src={images.ofisMasa} alt="Ofisteki masa: kesit paftaları, baret, şerit metre" widths={[600, 900]} sizes="(max-width: 1023px) 100vw, 40vw" loading="eager" /></figure></div>
+    </div>
+  </Floor>
+  <Floor id="ofis" code="Z" name="Ofis" kot="±0.00">
+    <div class="wrap g12 sec split">
+      <div class="split__a">
+        <h2 id="ofis-h" class="h-m">Ofis</h2>
+        <dl class="facts" style="margin-top:1rem">
+          <dt>Adres</dt><dd>{site.address.join(', ')}</dd>
+          {site.hours.map(([d, h]) => <><dt>{d}</dt><dd>{h}</dd></>)}
+          <dt>Telefon</dt><dd><a class="ulink" href={site.phone.href}>{site.phone.label}</a></dd>
+          <dt>WhatsApp</dt><dd><a class="ulink" href={wa('Merhaba, Kurt İnşaat sitesinden yazıyorum.')} target="_blank" rel="noopener">{site.whatsapp.label}<span class="sr-only"> (yeni sekmede açılır)</span></a></dd>
+          <dt>E-posta</dt><dd><a class="ulink" href={`mailto:${site.email}`}>{site.email}</a></dd>
+        </dl>
+        <div class="btns" style="margin-top:1.5rem"><Btn href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.mapQuery)}`} variant="line" external>Yol tarifi</Btn></div>
+      </div>
+      <div class="split__b">
+        <h2 class="h-m" style="margin-bottom:1rem">Sizi arayalım</h2>
+        <form class="form" data-wa={site.whatsapp.number} data-msg="Merhaba, beni arayabilir misiniz?">
+          <div class="field"><label for="c-ad">Adınız</label><input id="c-ad" name="ad" autocomplete="name" required /></div>
+          <div class="field"><label for="c-tel">Telefonunuz</label><input id="c-tel" name="tel" type="tel" inputmode="tel" autocomplete="tel" required /></div>
+          <div class="field"><label for="c-konu">Konu</label><select id="c-konu" name="konu"><option>Satılık daire</option><option>Kiralık daire</option><option>Kentsel dönüşüm</option><option>Arsa</option><option>Diğer</option></select></div>
+          <div class="field"><label for="c-saat">Uygun saat</label><select id="c-saat" name="saat"><option>Fark etmez</option><option>Sabah</option><option>Öğleden sonra</option><option>Akşam</option></select></div>
+          <div class="field full"><label for="c-not">Mesajınız (isteğe bağlı)</label><textarea id="c-not" name="not"></textarea></div>
+          <p class="form__note full">Gönder’e bastığınızda WhatsApp açılır ve yazdıklarınız mesaj olarak hazırlanır. Mesajı siz gönderene kadar bize hiçbir bilgi ulaşmaz. Ayrıntı için <a class="ulink" href="/kvkk/">KVKK aydınlatma metni</a>.</p>
+          <button class="btn btn--solid btn--md full" type="submit"><span class="btn__label">WhatsApp’ta hazırla ve gönder</span><svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" /></svg></button>
+          <p class="form__sent full" data-sent hidden>WhatsApp açıldı. Mesajı gönderdiğinizde sizi seçtiğiniz saatte arayacağız.</p>
+        </form>
+      </div>
+    </div>
+  </Floor>
+</Base>

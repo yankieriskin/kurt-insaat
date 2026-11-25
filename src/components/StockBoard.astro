@@ -1,0 +1,26 @@
+---
+// Satış panosu: dairesi olan her projenin küçük kesiti; satıştaki daireler turuncu yanar.
+import { projects, forSale } from '../data/site';
+const list = projects.filter((p) => p.building && p.units.length);
+const cw = 34, ch = 15, gx = 8;
+---
+<div class="board" role="list" aria-label="Projelere göre satıştaki daireler">
+  {list.map((p) => {
+    const n = p.building!.floors + 1;
+    const W = cw * 2 + gx + 12, H = n * ch + 18;
+    const sale = forSale(p).length;
+    return (
+      <a class="board__b" href={`/projeler/${p.slug}/#daireler`} role="listitem">
+        <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+          <rect x="6" y="6" width={W - 12} height={n * ch} class="mk__b" />
+          {p.units.map((u) => (
+            <rect x={6 + u.side * (cw + gx)} y={6 + (n - 1 - u.floor) * ch} width={cw} height={ch} class={`bd bd--${u.status}`} />
+          ))}
+          <line x1="0" x2={W} y1={6 + n * ch} y2={6 + n * ch} class="mk__g" />
+        </svg>
+        <span class="board__n">{p.name}</span>
+        <span class="board__c">{sale ? `${sale} satılık` : 'Hepsi satıldı'}</span>
+      </a>
+    );
+  })}
+</div>

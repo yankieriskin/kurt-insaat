@@ -1,0 +1,17 @@
+---
+// Birincil düğme: dolgu ortadan iki yana açılır (asansör kapısı), ok kayar.
+interface Props {
+  href: string;
+  variant?: 'solid' | 'line' | 'wa';
+  size?: 'md' | 'lg' | 'sm';
+  external?: boolean;
+  class?: string;
+  [k: string]: unknown;
+}
+const { href, variant = 'solid', size = 'md', external = false, class: cls, ...rest } = Astro.props;
+---
+<a href={href} class:list={['btn', `btn--${variant}`, `btn--${size}`, cls]} {...(external ? { target: '_blank', rel: 'noopener' } : {})} {...rest}>
+  <span class="btn__label"><slot /></span>
+  <svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d={external ? 'M5 11 11 5M6 5h5v5' : 'M2 8h11M9 4l4 4-4 4'} /></svg>
+  {external && <span class="sr-only"> (yeni sekmede açılır)</span>}
+</a>

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://kurtinsaat.com.tr/sitemap-index.xml

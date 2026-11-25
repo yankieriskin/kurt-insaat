@@ -1,0 +1,323 @@
+---
+import { Image, getImage } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Floor from '../../components/Floor.astro';
+import Kesit from '../../components/Kesit.astro';
+import Btn from '../../components/Btn.astro';
+import KotMark from '../../components/KotMark.astro';
+import AreaPlan from '../../components/AreaPlan.astro';
+import Icon from '../../components/Icon.astro';
+import { projects, site, wa, price, m2, floorName, statusLabel, stageLabel, unitType, forSale, log, kot, listings, listingSlug } from '../../data/site';
+import type { Project } from '../../data/site';
+
+export function getStaticPaths() {
+  return projects.map((p) => ({ params: { slug: p.slug }, props: { p } }));
+}
+const { p } = Astro.props as { p: Project };
+const sale = forSale(p);
+const hasUnits = p.units.length > 0;
+const plog = log.filter((e) => e.project === p.slug);
+const others = projects.filter((x) => x.slug !== p.slug);
+const next = others[(projects.indexOf(p)) % others.length];
+const full = await Promise.all(p.gallery.map((g) => getImage({ src: g.img, width: 1600, format: 'webp', quality: 70 })));
+const og = await getImage({ src: p.cover, width: 1200, height: 630, fit: 'cover', format: 'jpg' });
+const plisting = listings.filter((l) => l.project === p.slug && l.kind === 'kiralik');
+
+// Katlar: sayfadaki bölümler yukarıdan aşağı numaralanır (çatı, ..., zemin)
+const sections = [
+  { id: 'proje', name: 'Proje', show: true },
+  { id: 'daireler', name: 'Daireler', show: hasUnits },
+  { id: 'on-kayit', name: 'Ön kayıt', show: !hasUnits },
+  { id: 'tipler', name: 'Daire tipleri', show: p.types.length > 0 },
+  { id: 'galeri', name: 'Galeri', show: p.gallery.length > 1 },
+  { id: 'konum', name: 'Konum ve belgeler', show: true },
+  { id: 'sorular', name: 'Sorular', show: true },
+].filter((s) => s.show);
+const top = sections.length - 1; // çatının altındaki ilk kat numarası
+const fl = (id: string) => {
+  const i = sections.findIndex((s) => s.id === id);
+  const n = top - i; // son bölüm zemin
+  return { code: n === 0 ? 'Z' : String(n), kot: kot(n * 3), name: sections[i].name };
+};
+const roofKot = kot((top + 1) * 3);
+const minPrice = sale.length ? Math.min(...sale.map((u) => u.price!)) : 0;
+const desc = `${p.name}, ${p.district} ${p.neighborhood}. ${p.summary} ${sale.length ? `${sale.length} daire satışta, fiyatlar ${price(minPrice)} ile başlıyor.` : ''}`.slice(0, 158);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ApartmentComplex',
+  name: p.name,
+  description: p.summary,
+  address: { '@type': 'PostalAddress', addressLocality: `${p.neighborhood}, ${p.district}`, addressRegion: 'İstanbul', addressCountry: 'TR' },
+  numberOfAccommodationUnits: p.units.length || undefined,
+  numberOfAvailableAccommodationUnits: sale.length || undefined,
+};
+const cardInit = sale[0] ?? p.units[0];
+const cardT = cardInit ? unitType(p, cardInit.type) : null;
+---
+<Base title={`${p.name}, ${p.district}`} description={desc} image={og.src} jsonLd={jsonLd}>
+  <Floor id="cati" code="Ç" name={p.name} kot={roofKot} slab={false} class="pj-hero" label="pj-h">
+    <div class="wrap pj-head">
+      <ol class="crumbs" aria-label="Konum"><li><a href="/">Ana sayfa</a></li><li><a href="/projeler/">Projeler</a></li><li aria-current="page">{p.name}</li></ol>
+      <div class="g12 pj-hero__top">
+        <div class="pj-hero__title">
+          <p class="hero__kot" aria-hidden="true"><KotMark /><span>{roofKot}</span></p>
+          <h1 id="pj-h" class="display">{p.name}</h1>
+          <p class="phead__p">{p.summary}</p>
+        </div>
+        <dl class="metaline pj-hero__meta">
+          <div><dt>Yer</dt><dd>{p.neighborhood}, {p.district}</dd></div>
+          <div><dt>Durum</dt><dd><span class={`badge badge--${p.stage}`}>{stageLabel[p.stage]}</span></dd></div>
+          <div><dt>{p.stage === 'teslim' ? 'İskân' : 'Teslim'}</dt><dd>{p.delivery}</dd></div>
+          <div><dt>Model</dt><dd>{p.model}</dd></div>
+          {hasUnits && <div><dt>Daire</dt><dd>{p.units.length}</dd></div>}
+          {hasUnits && <div><dt>Satışta</dt><dd>{sale.length ? `${sale.length} daire, ${price(minPrice)} ile başlıyor` : 'Yok, hepsi satıldı'}</dd></div>}
+        </dl>
+      </div>
+    </div>
+    <figure class="pj-cover">
+      <Image quality={60} format="avif" src={p.cover} alt={p.coverAlt} widths={[640, 1024, 1600]} sizes="100vw" loading="eager" fetchpriority="high" data-critical />
+      <figcaption>Görsel temsilidir</figcaption>
+    </figure>
+  </Floor>
+
+  <nav class="ptabs" aria-label="Proje bölümleri" data-ptabs>
+    <ul>{sections.map((x) => <li><a href={`#${x.id}`}>{x.name}</a></li>)}</ul>
+  </nav>
+
+  <Floor id="proje" {...fl('proje')}>
+    <div class="wrap g12 sec">
+      <div class="pj-intro__a">
+        <h2 id="proje-h" class="display h-l" data-split="lines">{p.stage === 'teslim' ? 'Teslim edildi, içinde oturuluyor.' : p.stage === 'yakinda' ? 'Ruhsat bekleniyor.' : 'Şu an inşaatta.'}</h2>
+        <div class="prose" style="margin-top:1.4rem">{p.intro.map((t) => <p>{t}</p>)}</div>
+        {p.progress !== undefined && (
+          <div class="progress" data-bars>
+            <p class="progress__row"><span>İnşaat ilerlemesi</span><b>%{p.progress}</b></p>
+            <div class="progress__bar" role="img" aria-label={`İnşaatın yüzde ${p.progress} kadarı tamamlandı`}><span class="progress__fill" data-bar style={`width:${p.progress}%`}></span></div>
+            <p class="small muted" style="margin-top:0.6rem">{p.progressNote}</p>
+          </div>
+        )}
+      </div>
+      <div class="pj-intro__b">
+        <dl class="facts">{p.facts.map(([k, v]) => <><dt>{k}</dt><dd>{v}</dd></>)}</dl>
+      </div>
+    </div>
+  </Floor>
+
+  {hasUnits && (
+    <Floor id="daireler" {...fl('daireler')}>
+      <div class="wrap sec">
+        <div class="g12" style="margin-bottom:clamp(1.5rem,3vw,2.5rem)">
+          <div class="sec__head" style="grid-column:1 / span 7">
+            <h2 id="daireler-h" class="display h-l" data-split="lines">{sale.length ? `${sale.length} daire satışta.` : 'Bütün daireler satıldı.'}</h2>
+            <p class="muted">
+              <span class="hint-hover">Kesitte bir dairenin üstüne gelin ya da tıklayın.</span><span class="hint-touch">Kesitte bir daireye dokunun.</span>
+              {' '}Seçtiğiniz dairenin bilgileri kartta, bütün daireler aşağıdaki listede.
+            </p>
+          </div>
+        </div>
+        <div class="g12 picker">
+          <div class="picker__fig">
+            <Kesit project={p} mode="select" uid="pk" heading={`${p.name}. A-A kesiti`} />
+          </div>
+          {cardInit && cardT && (
+            <aside class="picker__card" aria-label="Seçili daire">
+              <div class="ucard" data-unit-card data-project={p.name} data-wa={`https://wa.me/${site.whatsapp.number}?text=`} aria-live="polite">
+                <div class="ucard__top"><span class="ucard__no" data-c="no">Daire {cardInit.no}</span><span class="ucard__st" data-c="status" data-status={cardInit.status}>{statusLabel[cardInit.status]}</span></div>
+                <dl>
+                  <div><dt>Kat</dt><dd data-c="floor">{floorName(cardInit.floor)}</dd></div>
+                  <div><dt>Tip</dt><dd data-c="type">{cardInit.type}</dd></div>
+                  <div><dt>Net alan</dt><dd data-c="net">{cardT.net} m²</dd></div>
+                  <div><dt>Brüt alan</dt><dd data-c="brut">{cardT.brut} m²</dd></div>
+                  <div><dt>Cephe</dt><dd data-c="facade">{cardInit.facade}</dd></div>
+                  <div><dt>Ek</dt><dd data-c="extra">{cardInit.extra ?? 'Yok'}</dd></div>
+                </dl>
+                <div class="ucard__price"><span class="small muted">Fiyat, KDV dahil</span><b data-c="price">{cardInit.price && cardInit.status !== 'satildi' ? price(cardInit.price) : 'Satıldı'}</b></div>
+                <div class="ucard__acts">
+                  <Btn href={wa(`Merhaba, ${p.name} daire ${cardInit.no} (${cardInit.type}, ${floorName(cardInit.floor).toLocaleLowerCase('tr')}) hakkında bilgi almak istiyorum.`)} external data-c="wa">Bu daireyi WhatsApp’tan sorun</Btn>
+                  <Btn href={`#tip-${cardInit.type.replace('+', '-')}`} variant="line" data-c="plan">Alan şemasını göster</Btn>
+                </div>
+                <p class="ucard__note">Fiyatlar {site.updated} tarihlidir. Ödeme seçenekleri aşağıda, konum ve belgeler bölümünde.</p>
+              </div>
+            </aside>
+          )}
+        </div>
+        <div class="utable">
+            <table>
+              <caption>{p.name}: bütün daireler</caption>
+              <thead><tr><th scope="col">Daire</th><th scope="col">Kat</th><th scope="col">Tip</th><th scope="col">Net</th><th scope="col">Brüt</th><th scope="col">Cephe</th><th scope="col">Durum</th><th scope="col">Fiyat</th></tr></thead>
+              <tbody>
+                {p.units.map((u) => {
+                  const t = unitType(p, u.type);
+                  return (
+                    <tr data-unit-row={u.no} id={`daire-${u.no}`} class={u === cardInit ? 'is-selected' : undefined}>
+                      <td><button type="button" aria-label={`Daire ${u.no}: kesitte göster`}>Daire {u.no}</button></td>
+                      <td>{floorName(u.floor)}</td>
+                      <td>{u.type}</td>
+                      <td>{m2(t.net)}</td>
+                      <td>{m2(t.brut)}</td>
+                      <td>{u.facade}</td>
+                      <td><span class={`st st--${u.status}`}>{statusLabel[u.status]}</span></td>
+                      <td>{u.price && (u.status === 'satista' || u.status === 'opsiyon') ? price(u.price) : '·'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        <div class="ulist">
+          <h3>Bütün daireler ({p.units.length})</h3>
+          <ul>
+            {p.units.map((u) => {
+              const t = unitType(p, u.type);
+              return (
+                <li data-unit-row={u.no} class={u === cardInit ? 'is-selected' : undefined}>
+                  <button type="button" class="urow" aria-label={`Daire ${u.no}, ${floorName(u.floor)}, ${u.type}, ${statusLabel[u.status]}: kesitte göster`}>
+                    <span class="urow__no">Daire {u.no}</span>
+                    <span class="urow__m">{floorName(u.floor)} · {u.type} · net {m2(t.net)} · {u.facade}</span>
+                    <span class="urow__p">{u.price && (u.status === 'satista' || u.status === 'opsiyon') ? price(u.price) : ''}</span>
+                    <span class={`st st--${u.status}`}>{statusLabel[u.status]}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    </Floor>
+  )}
+
+  {!hasUnits && (
+    <Floor id="on-kayit" {...fl('on-kayit')}>
+      <div class="wrap g12 sec split">
+        <div class="split__a">
+          <h2 id="on-kayit-h" class="display h-l" data-split="lines">Ön bilgi listesine yazılın.</h2>
+          <p class="muted">Ruhsat çıktığı gün fiyat listesini ve kat planlarını bu listedekilere ilk olarak göndereceğiz. Listeye yazılmak bir şey satın almak ya da kapora vermek anlamına gelmez.</p>
+        </div>
+        <form class="form split__b" data-wa={site.whatsapp.number} data-msg={`Merhaba, ${p.name} ön bilgi listesine yazılmak istiyorum.`}>
+          <div class="field"><label for="ok-ad">Adınız</label><input id="ok-ad" name="ad" autocomplete="name" required /></div>
+          <div class="field"><label for="ok-tel">Telefonunuz</label><input id="ok-tel" name="tel" type="tel" inputmode="tel" autocomplete="tel" required /></div>
+          <div class="field full"><label for="ok-not">Not (isteğe bağlı)</label><textarea id="ok-not" name="not" placeholder="Örneğin: köşe ev istiyoruz, iki çocuğumuz var"></textarea></div>
+          <p class="form__note full">Gönder’e bastığınızda WhatsApp açılır ve yazdıklarınız mesaj olarak hazırlanır. Mesajı siz gönderene kadar bize hiçbir bilgi ulaşmaz. Ayrıntı için <a class="ulink" href="/kvkk/">KVKK aydınlatma metni</a>.</p>
+          <button class="btn btn--solid btn--md full" type="submit"><span class="btn__label">WhatsApp’ta hazırla ve gönder</span><svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" /></svg></button>
+          <p class="form__sent full" data-sent hidden>WhatsApp açıldı. Mesajı gönderdiğinizde size aynı gün döneceğiz.</p>
+        </form>
+      </div>
+    </Floor>
+  )}
+
+  {p.types.length > 0 && (
+    <Floor id="tipler" {...fl('tipler')}>
+      <div class="wrap sec">
+        <div class="g12">
+          <div class="sec__head" style="grid-column:1 / span 7">
+            <h2 id="tipler-h" class="display h-l" data-split="lines">Daire tipleri, oda oda.</h2>
+            <p class="muted">Şemalarda odalar metrekareleriyle orantılı çizildi; bunlar mimari plan değildir. Ölçülü kat planını PDF olarak WhatsApp’tan isteyebilirsiniz.</p>
+          </div>
+        </div>
+        <div class="types">
+          {p.types.map((t) => (
+            <article class="type" id={`tip-${t.key.replace('+', '-')}`}>
+              <div class="type__h"><h3>{t.key}</h3><span class="small muted">{p.units.filter((u) => u.type === t.key).length} daire</span></div>
+              <div class="type__area"><AreaPlan t={t} uid={`ap-${t.key.replace('+', '')}`} /></div>
+              <table>
+                <tbody>{t.rooms.map((r) => <tr><td>{r.name}</td><td>{m2(r.m2)}</td></tr>)}</tbody>
+                <tfoot>
+                  <tr><td>Net alan</td><td>{m2(t.net)}</td></tr>
+                  <tr><td>Brüt alan</td><td>{m2(t.brut)}</td></tr>
+                </tfoot>
+              </table>
+            </article>
+          ))}
+        </div>
+        <p class="small muted" style="margin-top:1.5rem;max-width:70ch">Net alan dairenin duvarlar arasındaki kullanım alanıdır, balkon dahildir. Brüt alan dış duvarları kapsar, ortak alan payı dahil değildir.</p>
+      </div>
+    </Floor>
+  )}
+
+  {p.gallery.length > 1 && (
+    <Floor id="galeri" {...fl('galeri')}>
+      <div class="wrap sec">
+        <div class="g12"><h2 id="galeri-h" class="display h-l sec__head" data-split="lines">Görseller.</h2><p class="muted" style="grid-column:8 / span 5;align-self:end">Bina ve iç mekân görselleri temsilidir. Şantiye fotoğrafları şantiyeden.</p></div>
+        <div class="gal" data-gallery>
+          {p.gallery.map((g, i) => (
+            <a href={full[i].src} data-full={full[i].src} data-caption={`${g.group}: ${g.alt}`} aria-label={`Büyüt: ${g.alt}`} data-reveal="doors">
+              <Image quality={68} src={g.img} alt={g.alt} widths={[560, 900, 1300]} sizes="(max-width: 767px) 100vw, 55vw" loading="lazy" />
+              <span class="gal__group" aria-hidden="true">{g.group}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+      <dialog class="lb" data-lightbox aria-label="Görsel görüntüleyici">
+        <div class="lb__top"><span data-lb-num></span><button type="button" data-lb-close>Kapat</button></div>
+        <div class="lb__img"><img alt="" width="1800" height="1200" /></div>
+        <div class="lb__bot"><button type="button" data-lb-prev>Önceki</button><span data-lb-cap class="small"></span><button type="button" data-lb-next>Sonraki</button></div>
+      </dialog>
+    </Floor>
+  )}
+
+  <Floor id="konum" {...fl('konum')}>
+    <div class="wrap sec">
+      <div class="g12 split">
+        <div class="split__a">
+          <h2 id="konum-h" class="display h-l" data-split="lines">Konum ve belgeler.</h2>
+          <p class="muted">Mesafeler yol üzerinden, yaklaşık değerlerdir.</p>
+          <div class="btns" style="margin-top:1.2rem"><Btn href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.mapQuery)}`} variant="line" external>Haritada aç</Btn></div>
+        </div>
+        <div class="split__b">
+          <ul class="dist">{p.distances.map(([k, v]) => <li><span>{k}</span><b>{v}</b></li>)}</ul>
+          <h3 class="h-m" style="margin:2.5rem 0 0.8rem">Belgeler</h3>
+          <dl class="facts">{p.docs.map(([k, v]) => <><dt>{k}</dt><dd>{v}</dd></>)}</dl>
+          {p.payment.length > 0 && (
+            <>
+              <h3 class="h-m" style="margin:2.5rem 0 0.8rem">Ödeme</h3>
+              <ul class="pay">{p.payment.map((x) => <li><h4>{x.title}</h4><p>{x.text}</p></li>)}</ul>
+            </>
+          )}
+          {plisting.length > 0 && (
+            <>
+              <h3 class="h-m" style="margin:2.5rem 0 0.8rem">Bu binada kiralık</h3>
+              <ul class="pay">{plisting.map((l) => <li><h4><a class="ulink" href={`/ilanlar/${listingSlug(l)}/`}>{l.title}</a></h4><p>{price(l.price)} aylık, {l.rooms}, net {l.net} m²</p></li>)}</ul>
+            </>
+          )}
+          {plog.length > 0 && (
+            <>
+              <h3 class="h-m" style="margin:2.5rem 0 0.8rem">Şantiye notları</h3>
+              {plog.map((e) => <article class="entry"><p class="entry__d"><time>{e.date}</time></p><p class="entry__p">{e.text}</p></article>)}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  </Floor>
+
+  <Floor id="sorular" {...fl('sorular')}>
+    <div class="wrap g12 sec split">
+      <div class="split__a">
+        <h2 id="sorular-h" class="display h-l" data-split="lines">{p.faq.length ? 'Sık sorulanlar.' : 'Sorunuz mu var?'}</h2>
+        <p class="muted">Cevabını burada bulamadığınız soruyu yazın; aynı gün, yazılı olarak dönelim.</p>
+        <div class="btns" style="margin-top:1.2rem"><Btn href={wa(`Merhaba, ${p.name} hakkında bir sorum var.`)} external>WhatsApp’tan sorun</Btn></div>
+      </div>
+      <div class="split__b">
+        {p.faq.length > 0 && <div class="faq">{p.faq.map((f) => <details><summary>{f.q}</summary><p>{f.a}</p></details>)}</div>}
+        <a class="nextp" href={`/projeler/${next.slug}/`}>
+          <span><span class="nextp__k">Sıradaki proje</span><span class="nextp__n">{next.name}<Icon name="arrow" /></span><span class="nextp__m">{next.district} · {stageLabel[next.stage]}</span></span>
+          <span class="nextp__img"><Image quality={60} src={next.cover} alt="" widths={[200, 300]} sizes="140px" loading="lazy" /></span>
+        </a>
+      </div>
+    </div>
+  </Floor>
+
+  <Fragment slot="actbar">
+    <a class="ab__ic" href="/projeler/" aria-label="Projelere dön"><Icon name="back" /></a>
+    <a class="ab__ic" href={site.phone.href} aria-label={`Arayın: ${site.phone.label}`}><Icon name="phone" /></a>
+    {hasUnits && cardInit ? (
+      <a class="ab__main" href={wa(`Merhaba, ${p.name} daire ${cardInit.no} (${cardInit.type}, ${floorName(cardInit.floor).toLocaleLowerCase('tr')}) hakkında bilgi almak istiyorum.`)} target="_blank" rel="noopener" data-ab-wa>
+        <span class="ab__t"><b>WhatsApp’tan sorun</b><small data-ab-s>Daire {cardInit.no}, {floorName(cardInit.floor).toLocaleLowerCase('tr')}{cardInit.price && cardInit.status !== 'satildi' ? `, ${price(cardInit.price)}` : ''}</small></span><Icon name="arrow" /><span class="sr-only"> (yeni sekmede açılır)</span>
+      </a>
+    ) : !hasUnits ? (
+      <a class="ab__main" href="#on-kayit"><span class="ab__t"><b>Ön kayıt listesine yazılın</b><small>Ruhsat çıkınca fiyatlar ilk size</small></span><Icon name="arrow" /></a>
+    ) : (
+      <a class="ab__main" href={wa(`Merhaba, ${p.name} hakkında bir sorum var.`)} target="_blank" rel="noopener"><span class="ab__t"><b>WhatsApp’tan sorun</b><small>{p.name}</small></span><Icon name="arrow" /><span class="sr-only"> (yeni sekmede açılır)</span></a>
+    )}
+  </Fragment>
+</Base>

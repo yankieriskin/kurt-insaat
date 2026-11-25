@@ -1,0 +1,187 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Floor from '../components/Floor.astro';
+import Kesit from '../components/Kesit.astro';
+import Btn from '../components/Btn.astro';
+import Icon from '../components/Icon.astro';
+import KotMark from '../components/KotMark.astro';
+import ListingCard from '../components/ListingCard.astro';
+import Donusum from '../components/Donusum.astro';
+import { site, projects, listings, log, transformation, price, wa, getProject, stageLabel, forSale, images, unitType, m2 } from '../data/site';
+
+const flagship = getProject('esentepe-park');
+const sale = listings.filter((l) => l.kind === 'satilik');
+const rent = listings.filter((l) => l.kind === 'kiralik');
+const byRooms = ['1+1', '2+1', '3+1']
+  .map((r) => ({ r, n: sale.filter((l) => l.rooms === r).length }))
+  .filter((x) => x.n);
+const minRent = Math.min(...rent.map((l) => l.price));
+
+// "Açık hesap" örneği: amiral projenin 9 numaralı dairesi
+const ex = flagship.units.find((u) => u.no === 9)!;
+const exT = unitType(flagship, ex.type);
+const doc = (k: string) => flagship.docs.find((d) => d[0] === k)?.[1] ?? '';
+const antet = [
+  { k: 'Alan', v: 'Net ve brüt metrekare, oda oda', ex: `Daire ${ex.no}: net ${m2(exT.net)}, brüt ${m2(exT.brut)}, salon ${m2(exT.rooms[0].m2)}` },
+  { k: 'Konum', v: 'Kat, cephe ve daire numarası', ex: `${ex.floor}. kat, ${ex.facade.toLocaleLowerCase('tr')} cephe` },
+  { k: 'Fiyat', v: 'KDV dahil fiyat ve ödeme planı', ex: `${price(ex.price!)}, %40 peşin ile 18 ay vade farksız` },
+  { k: 'Ruhsat', v: 'Yapı ruhsatı tarihi ve yapı denetim firması', ex: `${doc('Yapı ruhsatı')}, ${doc('Yapı denetim')}` },
+  { k: 'Zemin', v: 'Zemin etüdü ve deprem hesabının dayandığı yönetmelik', ex: `${doc('Zemin etüdü').replace('Yapıldı. ', '')}, ${doc('Deprem hesabı')}` },
+  { k: 'Teslim', v: 'Teslim tarihi ve tapu durumu', ex: `${flagship.delivery}, ${doc('Tapu durumu').toLocaleLowerCase('tr')}` },
+];
+const pname = (slug: string) => projects.find((p) => p.slug === slug)?.name ?? '';
+const when = (p: (typeof projects)[number]) => (p.stage === 'teslim' ? `İskân ${p.delivery}` : p.stage === 'yakinda' ? 'Ruhsat bekleniyor' : `Teslim ${p.delivery}`);
+const saleLine = (p: (typeof projects)[number]) => {
+  const s = forSale(p);
+  return s.length ? `${s.length} daire satışta, ${price(Math.min(...s.map((u) => u.price!)))} ile başlıyor` : p.units.length ? 'Hepsi satıldı' : 'Ön kayıt açık';
+};
+const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.mapQuery)}`;
+---
+<Base description={site.description}>
+  <Floor id="cati" code="Ç" name="Çatı" kot="+18.00" tone="sky" slab={false} class="hero">
+    <div class="wrap g12 hero__grid">
+      <div class="hero__top">
+        <p class="hero__kot" aria-hidden="true"><KotMark /><span>+18.00</span></p>
+        <h1 id="cati-h" class="display">Her katını bildiğiniz bir ev.</h1>
+        <p class="hero__p">Anadolu yakasında konut yapıyor, satıyor ve kiraya veriyoruz. Her dairenin planı, metrekaresi ve fiyatı burada açıkça yazar.</p>
+        <ul class="chips hero__chips" aria-label="Hızlı arama">
+          <li><a class="chip chip--solid" href="/ilanlar/?tur=satilik">Satılık<small>{sale.length} daire</small></a></li>
+          <li><a class="chip" href="/ilanlar/?tur=kiralik">Kiralık<small>{rent.length} daire</small></a></li>
+          {byRooms.map((x) => <li><a class="chip" href={`/ilanlar/?tur=satilik&oda=${encodeURIComponent(x.r)}`}>{x.r}<small>{x.n} satılık</small></a></li>)}
+        </ul>
+      </div>
+      <div class="hero__fig">
+        <Kesit project={flagship} uid="hero" heading={`${flagship.name}, ${flagship.district}. A-A kesiti, ${flagship.units.length} daire`} />
+        <p class="hero__note">
+          <span class="hint-hover">İmleci binanın üstünde gezdirin: kesim çizgisi cepheyi açar, arkasındaki daireler görünür.</span>
+          <span class="hint-touch">Parmağınızı binanın üstünde kaydırın: kesim çizgisi cepheyi açar, daireler görünür.</span>
+          {' '}<a class="ulink" href={`/projeler/${flagship.slug}/`}>{flagship.name} proje sayfası</a>
+        </p>
+      </div>
+    </div>
+  </Floor>
+
+  <Floor id="satista" code="5" name="Satışta" kot="+15.00">
+    <div class="wrap sec">
+      <div class="rhead">
+        <div>
+          <h2 id="satista-h" class="display h-l">Şu an {sale.length} daire satışta.</h2>
+          <p class="small muted">KDV dahil fiyatlar, {site.updated} tarihli.</p>
+        </div>
+        <div class="rhead__side">
+          <div class="rnav"><button type="button" data-rail-prev="r-satis" aria-label="Önceki ilanlar" aria-controls="r-satis"><Icon name="prev" /></button><button type="button" data-rail-next="r-satis" aria-label="Sonraki ilanlar" aria-controls="r-satis"><Icon name="next" /></button></div>
+          <a class="more" href="/ilanlar/?tur=satilik">Tümü<Icon name="arrow" /></a>
+        </div>
+      </div>
+      <ul class="rail" id="r-satis" data-rail aria-label="Satıştaki daireler">
+        {sale.map((l, i) => <ListingCard l={l} i={i} />)}
+      </ul>
+      <a class="rowlink" href="/ilanlar/?tur=kiralik">
+        <span>{rent.length} daire kiralık<small>{[...new Set(rent.map((l) => l.district))].join(', ')}, aylık {price(minRent)} ile başlıyor</small></span>
+        <Icon name="arrow" />
+      </a>
+    </div>
+  </Floor>
+
+  <Floor id="projeler" code="4" name="Projeler" kot="+12.00">
+    <div class="wrap sec">
+      <div class="rhead">
+        <div><h2 id="projeler-h" class="display h-l">Dört bina, dört durum.</h2><p class="small muted">İkisi yükseliyor, biri teslim edildi, biri ruhsat bekliyor.</p></div>
+        <div class="rhead__side"><a class="more" href="/projeler/">Tümü<Icon name="arrow" /></a></div>
+      </div>
+      <ul class="rail rail--proj" id="r-proje" data-rail aria-label="Projeler">
+        {projects.map((p) => (
+          <li>
+            <a class="ptile" href={`/projeler/${p.slug}/`}>
+              <span class="ptile__media">
+                <Image quality={62} src={p.cover} alt={p.coverAlt} widths={[400, 640, 900]} sizes="(max-width: 767px) 82vw, (max-width: 1023px) 42vw, 25vw" loading="lazy" />
+                <span class={`ptile__tag ptile__tag--${p.stage}`}>{stageLabel[p.stage]}</span>
+              </span>
+              <span class="ptile__name">{p.name}<Icon name="arrow" /></span>
+              {p.progress !== undefined && <span class="ptile__bar" role="img" aria-label={`İnşaat yüzde ${p.progress}`}><span style={`width:${p.progress}%`}></span></span>}
+              <span class="ptile__meta"><span>{p.neighborhood}, {p.district} · {when(p)}</span><span>{saleLine(p)}</span></span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </Floor>
+
+  <Floor id="acik-hesap" code="3" name="Açık hesap" kot="+9.00">
+    <div class="wrap g12 sec">
+      <h2 id="acik-hesap-h" class="display antet__lead" data-split="lines">Satmadan önce altı bilgiyi yazılı veririz.</h2>
+      <p class="antet__side muted">Çoğu ilanda bu bilgiler satış ofisine gidene kadar yazmaz. Bizim her ilanımızda yazar. Eksik gördüğünüz bir şey olursa sorun, aynı gün yazılı cevap verelim.</p>
+      <div class="antet" role="list" aria-label="Her ilanda yazan altı bilgi">
+        {antet.map((a, i) => (
+          <div class="antet__cell" role="listitem">
+            <p class="antet__k"><b>{a.k}</b><span>{i + 1} / {antet.length}</span></p>
+            <p class="antet__v">{a.v}</p>
+            <p class="antet__ex">Örnek, {flagship.name}: {a.ex}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </Floor>
+
+  <Floor id="donusum" code="2" name="Dönüşüm" kot="+6.00">
+    <div class="wrap sec">
+      <div class="dzcard tone-soil">
+        <p class="dzcard__k"><span>Kentsel dönüşüm, kat karşılığı</span><span>{transformation.months} ay</span></p>
+        <h2 id="donusum-h" class="display">Binanız dönüşüme girecekse, teklifimiz yazılı gelir.</h2>
+        <ul class="dzcard__facts">
+          <li><b>Ücretsiz</b><span>Ön görüşme, bina tespiti ve teklif</span></li>
+          <li><b>Net m²</b><span>Size düşen dairenin katı, cephesi ve net metrekaresi</span></li>
+          <li><b>{transformation.months} ay</b><span>On daireli bir binada ilk görüşmeden anahtara, tahmini</span></li>
+        </ul>
+        <div class="btns"><Btn href="/kentsel-donusum/" variant="line">Süreci ve takvimi görün</Btn></div>
+        <div class="dzcard__fig"><Donusum /></div>
+      </div>
+    </div>
+  </Floor>
+
+  <Floor id="santiye" code="1" name="Şantiyeden" kot="+3.00">
+    <div class="wrap sec">
+      <div class="rhead">
+        <div><h2 id="santiye-h" class="display h-l">Şantiyeden son notlar.</h2></div>
+        <div class="rhead__side"><div class="rnav"><button type="button" data-rail-prev="r-log" aria-label="Önceki notlar" aria-controls="r-log"><Icon name="prev" /></button><button type="button" data-rail-next="r-log" aria-label="Sonraki notlar" aria-controls="r-log"><Icon name="next" /></button></div></div>
+      </div>
+      <ul class="rail" id="r-log" data-rail aria-label="Şantiye notları">
+        {log.map((e) => (
+          <li>
+            <article class="note">
+              <p class="note__d"><time>{e.date}</time><a class="ulink" href={`/projeler/${e.project}/`}>{pname(e.project)}</a></p>
+              {e.img && <figure class="note__img"><Image quality={62} src={e.img} alt={e.alt!} widths={[400, 640, 900]} sizes="(max-width: 767px) 82vw, 30vw" loading="lazy" /></figure>}
+              <p>{e.text}</p>
+            </article>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </Floor>
+
+  <Floor id="zemin" code="Z" name="Zemin" kot="±0.00">
+    <div class="wrap g12 sec">
+      <div class="zemin__a">
+        <h2 id="zemin-h" class="display h-l" data-split="lines">Ofisimiz zemin katta, kapımız açık.</h2>
+        <div class="prose" style="margin-top:1.1rem">
+          <p>Kurt İnşaat bir aile şirketi. Arsayı biz buluyoruz, projeyi mimarla birlikte biz hazırlıyoruz, şantiyede her gün biz duruyoruz ve daireyi size biz satıyoruz. Bir daireyi sorduğunuzda karşınıza o binayı yapan kişi çıkar.</p>
+        </div>
+        <figure class="zemin__img" data-reveal="doors">
+          <Image quality={68} src={images.ofisMasa} alt="Şantiye ofisinde bir masa: kesit paftaları, beyaz baret, şerit metre ve kalem" widths={[640, 1000]} sizes="(max-width: 1023px) 100vw, 50vw" loading="lazy" />
+        </figure>
+      </div>
+      <div class="zemin__b">
+        <ul class="acts">
+          <li><a class="act act--wa" href={wa('Merhaba, ofise gelmek istiyorum. Uygun bir saat var mı?')} target="_blank" rel="noopener"><Icon name="chat" /><span class="act__t">Ofise gelmek için yazın<small>WhatsApp {site.whatsapp.label}</small></span><Icon name="arrow" class="act__go" /><span class="sr-only"> (yeni sekmede açılır)</span></a></li>
+          <li><a class="act" href={site.phone.href}><Icon name="phone" /><span class="act__t">Arayın<small>{site.phone.label}</small></span><Icon name="arrow" class="act__go" /></a></li>
+          <li><a class="act" href={maps} target="_blank" rel="noopener"><Icon name="pin" /><span class="act__t">Yol tarifi<small>{site.address.join(', ')}</small></span><Icon name="arrow" class="act__go" /><span class="sr-only"> (yeni sekmede açılır)</span></a></li>
+        </ul>
+        <dl class="facts">
+          {site.hours.map(([d, h]) => <><dt>{d}</dt><dd>{h}</dd></>)}
+          <dt>E-posta</dt><dd><a class="ulink" href={`mailto:${site.email}`}>{site.email}</a></dd>
+        </dl>
+      </div>
+    </div>
+  </Floor>
+</Base>
